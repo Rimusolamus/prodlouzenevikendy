@@ -22,16 +22,51 @@ class AllHolidaysViewModel(
     init {
         viewModelScope.launch {
             _publicHolidays.value = publicHolidaysRepository.getPublicHolidays()
+            makeListOfWorkingDaysOfTheYear(_publicHolidays.value)
         }
     }
 
     // 0 - working day
-    // 1 - public holiday
-    // 2 - weekend
+    // 1 - weekends
+    // 2 - public holidays
     private fun makeListOfWorkingDaysOfTheYear(publicHolidays: List<PublicHoliday>): List<Int> {
-        val workingDaysOfTheYear = mutableListOf<Int>()
-        val wholeYear = List(getNumberOfDaysInCurrentYear()) { 0 }
+        val wholeYear = MutableList(getNumberOfDaysInCurrentYear()) { 0 }
+        getWeekendDaysIndexes().map { wholeYear[it - 1] = 1 }
+        // if public holiday is on weekend, it is not counted as public holiday here
+        getPublicHolidaysIndexes(publicHolidays).map {
+            if (wholeYear[it - 1] != 1) wholeYear[it - 1] = 2
+        }
         return wholeYear
+    }
+
+    private fun getWeekendDaysIndexes(): List<Int> {
+        val calendar = Calendar.getInstance()
+        val weekendDaysIndexes = mutableListOf<Int>()
+
+        for (day in 1..getNumberOfDaysInCurrentYear()) {
+            calendar.set(Calendar.DAY_OF_YEAR, day)
+            if (calendar.get(Calendar.DAY_OF_WEEK) == Calendar.SATURDAY || calendar.get(Calendar.DAY_OF_WEEK) == Calendar.SUNDAY) {
+                weekendDaysIndexes.add(day)
+            }
+        }
+        return weekendDaysIndexes
+    }
+
+    private fun getPublicHolidaysIndexes(publicHolidays: List<PublicHoliday>): List<Int> {
+        val publicHolidaysIndexes = mutableListOf<Int>()
+        publicHolidays.map { publicHolidaysIndexes.add(getDayOfYear(it.date)) }
+        return publicHolidaysIndexes
+    }
+
+    private fun getDayOfYear(dateString: String): Int {
+        val date = parseDateString(dateString)
+        val calendar = Calendar.getInstance()
+        return if (date != null) {
+            calendar.time = date
+            calendar.get(Calendar.DAY_OF_YEAR)
+        } else {
+            0
+        }
     }
 
     private fun getNumberOfDaysInCurrentYear(): Int {
