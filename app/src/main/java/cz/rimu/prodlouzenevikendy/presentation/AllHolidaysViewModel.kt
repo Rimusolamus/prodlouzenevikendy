@@ -23,8 +23,9 @@ class AllHolidaysViewModel(
     init {
         viewModelScope.launch {
             _publicHolidays.value = publicHolidaysRepository.getPublicHolidays()
-            val wholeYear = makeListOfWorkingDaysOfTheYear(_publicHolidays.value)
-//            val wholeYear = listOf(0, 0, 0, 0, 2, 0, 1, 1, 0, 1, 0, 0, 0)
+//            val wholeYear = makeListOfWorkingDaysOfTheYear(_publicHolidays.value)
+            val wholeYear =
+                listOf(0, 0, 0, 0, 2, 0, 1, 1, 0, 1, 0, 0, 0, 2, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0)
             for (i in wholeYear.indices) {
                 if (wholeYear[i] == 2) {
                     val holidaysIndexes = getHolidaysIndexesCloseToDate(wholeYear, i)
@@ -33,13 +34,13 @@ class AllHolidaysViewModel(
                             wholeYear,
                             holidaysIndexes,
                             HolidayFinderDirection.RIGHT
-                        ).map { it.days }
+                        )
                     val recommendToLeft =
                         getRecommended(
                             wholeYear,
                             holidaysIndexes,
                             HolidayFinderDirection.LEFT
-                        ).map { it.days }
+                        )
                     recommendedHolidays.add(listOf(recommendToRight, recommendToLeft))
                 }
             }
@@ -50,8 +51,8 @@ class AllHolidaysViewModel(
         wholeYear: List<Int>,
         holidayIndexes: List<Int>,
         direction: HolidayFinderDirection
-    ): List<HolidayRecommendation> {
-        val holidayRecommendation = HolidayRecommendation()
+    ): List<List<Int>> {
+        var holidayRecommendation = HolidayRecommendation()
         val holidayRecommendationList = mutableListOf<HolidayRecommendation>()
         var index = holidayIndexes.last()
         var numberOfDays = 0
@@ -75,11 +76,13 @@ class AllHolidaysViewModel(
                 updatedHolidayIndexes.first()
             }
 
-            holidayRecommendation.rate = updatedHolidayIndexes.size.toFloat() / numberOfDays
-            holidayRecommendation.days = updatedHolidayIndexes
+            holidayRecommendation = holidayRecommendation.copy(
+                rate = updatedHolidayIndexes.size.toFloat() / numberOfDays,
+                days = updatedHolidayIndexes
+            )
 
             if (holidayRecommendation.rate < 2) {
-                return holidayRecommendationList
+                return holidayRecommendationList.map { it.days }
             } else {
                 if (holidayRecommendationList.isEmpty()) {
                     holidayRecommendationList.add(holidayRecommendation)

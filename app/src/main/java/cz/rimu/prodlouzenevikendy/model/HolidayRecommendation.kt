@@ -1,6 +1,6 @@
 package cz.rimu.prodlouzenevikendy.model
 
 data class HolidayRecommendation(
-    var rate: Float = 0f,
-    var days: List<Int> = emptyList()
+    val rate: Float = 0f,
+    val days: List<Int> = emptyList()
 )
