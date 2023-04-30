@@ -29,18 +29,27 @@ class AllHolidaysViewModel(
                 if (wholeYear[i] == 2) {
                     val holidaysIndexes = getHolidaysIndexesCloseToDate(wholeYear, i)
                     val recommendToRight =
-                        getRecommendedToRight(wholeYear, holidaysIndexes).map { it.days }
+                        getRecommended(
+                            wholeYear,
+                            holidaysIndexes,
+                            HolidayFinderDirection.RIGHT
+                        ).map { it.days }
                     val recommendToLeft =
-                        getRecommendedToLeft(wholeYear, holidaysIndexes).map { it.days }
+                        getRecommended(
+                            wholeYear,
+                            holidaysIndexes,
+                            HolidayFinderDirection.LEFT
+                        ).map { it.days }
                     recommendedHolidays.add(listOf(recommendToRight, recommendToLeft))
                 }
             }
         }
     }
 
-    private fun getRecommendedToRight(
+    private fun getRecommended(
         wholeYear: List<Int>,
-        holidayIndexes: List<Int>
+        holidayIndexes: List<Int>,
+        direction: HolidayFinderDirection
     ): List<HolidayRecommendation> {
         val holidayRecommendation = HolidayRecommendation()
         val holidayRecommendationList = mutableListOf<HolidayRecommendation>()
@@ -49,50 +58,22 @@ class AllHolidaysViewModel(
 
         val wholeYearMutable = wholeYear.toMutableList()
         while (true) {
-            index++
-            if (wholeYearMutable.getOrNull(index) == 0 && wholeYearMutable.getOrNull(index) != null) {
-                numberOfDays++
-                wholeYearMutable[index] = 3
-            }
-            val updatedHolidayIndexes = getHolidaysIndexesCloseToDate(wholeYearMutable, index)
-            index = updatedHolidayIndexes.last()
-
-            holidayRecommendation.rate = updatedHolidayIndexes.size.toFloat() / numberOfDays
-            holidayRecommendation.days = updatedHolidayIndexes
-
-            if (holidayRecommendation.rate < 2) {
-                return holidayRecommendationList
+            if (direction == HolidayFinderDirection.RIGHT) {
+                index++
             } else {
-                if (holidayRecommendationList.isEmpty()) {
-                    holidayRecommendationList.add(holidayRecommendation)
-                } else {
-                    if (holidayRecommendationList.last().rate != holidayRecommendation.rate
-                    ) {
-                        holidayRecommendationList.add(holidayRecommendation)
-                    }
-                }
+                index--
             }
-        }
-    }
-
-    private fun getRecommendedToLeft(
-        wholeYear: List<Int>,
-        holidayIndexes: List<Int>
-    ): List<HolidayRecommendation> {
-        val holidayRecommendation = HolidayRecommendation()
-        val holidayRecommendationList = mutableListOf<HolidayRecommendation>()
-        var index = holidayIndexes.first()
-        var numberOfDays = 0
-
-        val wholeYearMutable = wholeYear.toMutableList()
-        while (true) {
-            index--
             if (wholeYearMutable.getOrNull(index) == 0 && wholeYearMutable.getOrNull(index) != null) {
                 numberOfDays++
                 wholeYearMutable[index] = 3
             }
             val updatedHolidayIndexes = getHolidaysIndexesCloseToDate(wholeYearMutable, index)
-            index = updatedHolidayIndexes.first()
+
+            index = if (direction == HolidayFinderDirection.RIGHT) {
+                updatedHolidayIndexes.last()
+            } else {
+                updatedHolidayIndexes.first()
+            }
 
             holidayRecommendation.rate = updatedHolidayIndexes.size.toFloat() / numberOfDays
             holidayRecommendation.days = updatedHolidayIndexes
@@ -212,5 +193,9 @@ class AllHolidaysViewModel(
             println("Failed to parse date string: $dateString")
             null
         }
+    }
+
+    enum class HolidayFinderDirection {
+        LEFT, RIGHT
     }
 }
