@@ -3,13 +3,12 @@ package cz.rimu.prodlouzenevikendy.presentation
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import cz.rimu.prodlouzenevikendy.domain.PublicHolidaysRepository
+import cz.rimu.prodlouzenevikendy.model.HolidayRecommendation
 import cz.rimu.prodlouzenevikendy.model.PublicHoliday
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
-import java.time.Year
-import java.time.YearMonth
 import java.util.*
 
 class AllHolidaysViewModel(
@@ -19,11 +18,125 @@ class AllHolidaysViewModel(
     private val _publicHolidays = MutableStateFlow<List<PublicHoliday>>(emptyList())
     val publicHolidays: StateFlow<List<PublicHoliday>> = _publicHolidays
 
+    private val recommendedHolidays = mutableListOf<List<List<List<Int>>>>()
+
     init {
         viewModelScope.launch {
             _publicHolidays.value = publicHolidaysRepository.getPublicHolidays()
-            makeListOfWorkingDaysOfTheYear(_publicHolidays.value)
+            val wholeYear = makeListOfWorkingDaysOfTheYear(_publicHolidays.value)
+//            val wholeYear = listOf(0, 0, 0, 0, 2, 0, 1, 1, 0, 1, 0, 0, 0)
+            for (i in wholeYear.indices) {
+                if (wholeYear[i] == 2) {
+                    val holidaysIndexes = getHolidaysIndexesCloseToDate(wholeYear, i)
+                    val recommendToRight =
+                        getRecommendedToRight(wholeYear, holidaysIndexes).map { it.days }
+                    val recommendToLeft =
+                        getRecommendedToLeft(wholeYear, holidaysIndexes).map { it.days }
+                    recommendedHolidays.add(listOf(recommendToRight, recommendToLeft))
+                }
+            }
         }
+    }
+
+    private fun getRecommendedToRight(
+        wholeYear: List<Int>,
+        holidayIndexes: List<Int>
+    ): List<HolidayRecommendation> {
+        val holidayRecommendation = HolidayRecommendation()
+        val holidayRecommendationList = mutableListOf<HolidayRecommendation>()
+        var index = holidayIndexes.last()
+        var numberOfDays = 0
+
+        val wholeYearMutable = wholeYear.toMutableList()
+        while (true) {
+            index++
+            if (wholeYearMutable.getOrNull(index) == 0 && wholeYearMutable.getOrNull(index) != null) {
+                numberOfDays++
+                wholeYearMutable[index] = 3
+            }
+            val updatedHolidayIndexes = getHolidaysIndexesCloseToDate(wholeYearMutable, index)
+            index = updatedHolidayIndexes.last()
+
+            holidayRecommendation.rate = updatedHolidayIndexes.size.toFloat() / numberOfDays
+            holidayRecommendation.days = updatedHolidayIndexes
+
+            if (holidayRecommendation.rate < 2) {
+                return holidayRecommendationList
+            } else {
+                if (holidayRecommendationList.isEmpty()) {
+                    holidayRecommendationList.add(holidayRecommendation)
+                } else {
+                    if (holidayRecommendationList.last().rate != holidayRecommendation.rate
+                    ) {
+                        holidayRecommendationList.add(holidayRecommendation)
+                    }
+                }
+            }
+        }
+    }
+
+    private fun getRecommendedToLeft(
+        wholeYear: List<Int>,
+        holidayIndexes: List<Int>
+    ): List<HolidayRecommendation> {
+        val holidayRecommendation = HolidayRecommendation()
+        val holidayRecommendationList = mutableListOf<HolidayRecommendation>()
+        var index = holidayIndexes.first()
+        var numberOfDays = 0
+
+        val wholeYearMutable = wholeYear.toMutableList()
+        while (true) {
+            index--
+            if (wholeYearMutable.getOrNull(index) == 0 && wholeYearMutable.getOrNull(index) != null) {
+                numberOfDays++
+                wholeYearMutable[index] = 3
+            }
+            val updatedHolidayIndexes = getHolidaysIndexesCloseToDate(wholeYearMutable, index)
+            index = updatedHolidayIndexes.first()
+
+            holidayRecommendation.rate = updatedHolidayIndexes.size.toFloat() / numberOfDays
+            holidayRecommendation.days = updatedHolidayIndexes
+
+            if (holidayRecommendation.rate < 2) {
+                return holidayRecommendationList
+            } else {
+                if (holidayRecommendationList.isEmpty()) {
+                    holidayRecommendationList.add(holidayRecommendation)
+                } else {
+                    if (holidayRecommendationList.last().rate != holidayRecommendation.rate
+                    ) {
+                        holidayRecommendationList.add(holidayRecommendation)
+                    }
+                }
+            }
+        }
+    }
+
+    private fun getHolidaysIndexesCloseToDate(wholeYear: List<Int>, holidayIndex: Int): List<Int> {
+        val listOfNonWorkingDaysInARow = mutableListOf<Int>()
+        listOfNonWorkingDaysInARow.add(holidayIndex)
+        var nextIndex = holidayIndex
+
+        while (true) {
+            nextIndex++
+            if (wholeYear.getOrNull(nextIndex) != 0 && wholeYear.getOrNull(nextIndex) != null) {
+                listOfNonWorkingDaysInARow.add(nextIndex)
+            } else {
+                break
+            }
+        }
+
+        nextIndex = holidayIndex
+
+        while (true) {
+            nextIndex--
+            if (wholeYear.getOrNull(nextIndex) != 0 && wholeYear.getOrNull(nextIndex) != null) {
+                listOfNonWorkingDaysInARow.add(nextIndex)
+            } else {
+                break
+            }
+        }
+        return listOfNonWorkingDaysInARow.sorted()
     }
 
     // 0 - working day
@@ -34,7 +147,7 @@ class AllHolidaysViewModel(
         getWeekendDaysIndexes().map { wholeYear[it - 1] = 1 }
         // if public holiday is on weekend, it is not counted as public holiday here
         getPublicHolidaysIndexes(publicHolidays).map {
-            if (wholeYear[it - 1] != 1) wholeYear[it - 1] = 2
+            wholeYear[it - 1] = 2
         }
         return wholeYear
     }
