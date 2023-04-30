@@ -23,9 +23,9 @@ class AllHolidaysViewModel(
     init {
         viewModelScope.launch {
             _publicHolidays.value = publicHolidaysRepository.getPublicHolidays()
-//            val wholeYear = makeListOfWorkingDaysOfTheYear(_publicHolidays.value)
-            val wholeYear =
-                listOf(0, 0, 0, 0, 2, 0, 1, 1, 0, 1, 0, 0, 0, 2, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0)
+            val wholeYear = makeListOfWorkingDaysOfTheYear(_publicHolidays.value)
+//            val wholeYear =
+//                listOf(2,0,0,0,0,0,1,1,0,0,0,0,0,1,1)
             for (i in wholeYear.indices) {
                 if (wholeYear[i] == 2) {
                     val holidaysIndexes = getHolidaysIndexesCloseToDate(wholeYear, i)
@@ -62,6 +62,9 @@ class AllHolidaysViewModel(
             if (direction == HolidayFinderDirection.RIGHT) {
                 index++
             } else {
+                if (index == 0) {
+                    return holidayRecommendationList.map { it.days }
+                }
                 index--
             }
             if (wholeYearMutable.getOrNull(index) == 0 && wholeYearMutable.getOrNull(index) != null) {
