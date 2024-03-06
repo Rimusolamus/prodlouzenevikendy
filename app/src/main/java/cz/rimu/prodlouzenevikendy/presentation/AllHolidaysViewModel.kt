@@ -39,9 +39,10 @@ class AllHolidaysViewModel(
                     _extendedPublicHolidays.value + extendedPublicHoliday
             }
 
-            val wholeYear = makeListOfWorkingDaysOfTheYear(_publicHolidays.value)
-//            val wholeYear =
-//                listOf(2,0,0,0,0,0,1,1,0,0,0,0,0,1,1)
+//            val wholeYear = makeListOfWorkingDaysOfTheYear(_publicHolidays.value)
+            val wholeYear =
+                listOf(0,1,1,0,0,0,0,2,1,1,0,0,0,0,0,1,1,0)
+            //                                       15
 
             var holidayNumber = -1
 
@@ -62,7 +63,7 @@ class AllHolidaysViewModel(
                             HolidayFinderDirection.LEFT
                         )
                     _extendedPublicHolidays.value[holidayNumber].recommendedDays =
-                        recommendToRight + recommendToLeft
+                        (recommendToRight + recommendToLeft).sortedBy { it.size }
                 }
             }
         }
