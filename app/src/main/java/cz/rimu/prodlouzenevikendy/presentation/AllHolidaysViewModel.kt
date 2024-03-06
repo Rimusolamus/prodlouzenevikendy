@@ -3,12 +3,15 @@ package cz.rimu.prodlouzenevikendy.presentation
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import cz.rimu.prodlouzenevikendy.domain.PublicHolidaysRepository
+import cz.rimu.prodlouzenevikendy.model.ExtendedPublicHoliday
 import cz.rimu.prodlouzenevikendy.model.HolidayRecommendation
 import cz.rimu.prodlouzenevikendy.model.PublicHoliday
+import cz.rimu.prodlouzenevikendy.model.toLocalDate
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
+import java.time.LocalDate
 import java.util.*
 
 class AllHolidaysViewModel(
@@ -16,18 +19,35 @@ class AllHolidaysViewModel(
 ) : ViewModel() {
 
     private val _publicHolidays = MutableStateFlow<List<PublicHoliday>>(emptyList())
-    val publicHolidays: StateFlow<List<PublicHoliday>> = _publicHolidays
 
-    private val recommendedHolidays = mutableListOf<List<List<List<Int>>>>()
+    private val _extendedPublicHolidays = MutableStateFlow<List<ExtendedPublicHoliday>>(emptyList())
+    val extendedPublicHolidays: StateFlow<List<ExtendedPublicHoliday>> = _extendedPublicHolidays
 
     init {
         viewModelScope.launch {
-            _publicHolidays.value = publicHolidaysRepository.getPublicHolidays()
+            val list = publicHolidaysRepository.getPublicHolidays()
+            _publicHolidays.value = list
+
+            list.map { publicHoliday ->
+                val extendedPublicHoliday = ExtendedPublicHoliday(
+                    name = publicHoliday.name,
+                    localName = publicHoliday.localName,
+                    date = parseDateString(publicHoliday.date),
+                    recommendedDays = listOf()
+                )
+                _extendedPublicHolidays.value =
+                    _extendedPublicHolidays.value + extendedPublicHoliday
+            }
+
             val wholeYear = makeListOfWorkingDaysOfTheYear(_publicHolidays.value)
 //            val wholeYear =
 //                listOf(2,0,0,0,0,0,1,1,0,0,0,0,0,1,1)
+
+            var holidayNumber = -1
+
             for (i in wholeYear.indices) {
                 if (wholeYear[i] == 2) {
+                    holidayNumber++
                     val holidaysIndexes = getHolidaysIndexesCloseToDate(wholeYear, i)
                     val recommendToRight =
                         getRecommended(
@@ -41,7 +61,8 @@ class AllHolidaysViewModel(
                             holidaysIndexes,
                             HolidayFinderDirection.LEFT
                         )
-                    recommendedHolidays.add(listOf(recommendToRight, recommendToLeft))
+                    _extendedPublicHolidays.value[holidayNumber].recommendedDays =
+                        recommendToRight + recommendToLeft
                 }
             }
         }
@@ -51,7 +72,7 @@ class AllHolidaysViewModel(
         wholeYear: List<Int>,
         holidayIndexes: List<Int>,
         direction: HolidayFinderDirection
-    ): List<List<Int>> {
+    ): List<List<LocalDate>> {
         var holidayRecommendation = HolidayRecommendation()
         val holidayRecommendationList = mutableListOf<HolidayRecommendation>()
         var index = holidayIndexes.last()
@@ -63,7 +84,7 @@ class AllHolidaysViewModel(
                 index++
             } else {
                 if (index == 0) {
-                    return holidayRecommendationList.map { it.days }
+                    return holidayRecommendationList.map { it.daysDates }
                 }
                 index--
             }
@@ -81,11 +102,12 @@ class AllHolidaysViewModel(
 
             holidayRecommendation = holidayRecommendation.copy(
                 rate = updatedHolidayIndexes.size.toFloat() / numberOfDays,
-                days = updatedHolidayIndexes
+                days = updatedHolidayIndexes,
+                daysDates = updatedHolidayIndexes.map { getDateByDayOfYear(it).toLocalDate() }
             )
 
             if (holidayRecommendation.rate < 2) {
-                return holidayRecommendationList.map { it.days }
+                return holidayRecommendationList.map { it.daysDates }
             } else {
                 if (holidayRecommendationList.isEmpty()) {
                     holidayRecommendationList.add(holidayRecommendation)
@@ -156,6 +178,12 @@ class AllHolidaysViewModel(
         val publicHolidaysIndexes = mutableListOf<Int>()
         publicHolidays.map { publicHolidaysIndexes.add(getDayOfYear(it.date)) }
         return publicHolidaysIndexes
+    }
+
+    private fun getDateByDayOfYear(dayOfYear: Int): Date {
+        val calendar = Calendar.getInstance()
+        calendar.set(Calendar.DAY_OF_YEAR, dayOfYear)
+        return calendar.time
     }
 
     private fun getDayOfYear(dateString: String): Int {
