@@ -39,10 +39,9 @@ class AllHolidaysViewModel(
                     _extendedPublicHolidays.value + extendedPublicHoliday
             }
 
-//            val wholeYear = makeListOfWorkingDaysOfTheYear(_publicHolidays.value)
-            val wholeYear =
-                listOf(0,1,1,0,0,0,0,2,1,1,0,0,0,0,0,1,1,0)
-            //                                       15
+            val wholeYear = makeListOfWorkingDaysOfTheYear(_publicHolidays.value)
+//            val wholeYear =
+//                listOf(0,1,1,0,0,0,0,2,1,1,0,0,0,0,0,1,1,0)
 
             var holidayNumber = -1
 
@@ -183,7 +182,7 @@ class AllHolidaysViewModel(
 
     private fun getDateByDayOfYear(dayOfYear: Int): Date {
         val calendar = Calendar.getInstance()
-        calendar.set(Calendar.DAY_OF_YEAR, dayOfYear)
+        calendar.set(Calendar.DAY_OF_YEAR, dayOfYear + 1)
         return calendar.time
     }
 
