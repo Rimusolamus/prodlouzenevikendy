@@ -3,7 +3,6 @@ package cz.rimu.prodlouzenevikendy.screens
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -11,7 +10,12 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import cz.rimu.prodlouzenevikendy.presentation.HolidayCountViewModel
-import cz.rimu.prodlouzenevikendy.ui.theme.ProdlouzeneVikendyTheme
+import kiwi.orbit.compose.ui.OrbitTheme
+import kiwi.orbit.compose.ui.controls.ButtonPrimary
+import kiwi.orbit.compose.ui.controls.Scaffold
+import kiwi.orbit.compose.ui.controls.Text
+import kiwi.orbit.compose.ui.controls.TextField
+import kiwi.orbit.compose.ui.controls.TopAppBar
 import org.koin.androidx.compose.getViewModel
 
 
@@ -32,15 +36,12 @@ private fun HolidayCountScreenImpl(
     Scaffold(
         topBar = {
             TopAppBar(
-                backgroundColor = MaterialTheme.colors.secondary,
-                elevation = 0.dp
-            ) {
-                Text(text = "Prodloužené víkendy na rok!")
-            }
+                title = { Text(text = "Prodloužené víkendy na rok!") }
+            )
         },
-        bottomBar = {
+        action = {
             Column {
-                Button(
+                ButtonPrimary(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 32.dp),
@@ -72,14 +73,14 @@ private fun HolidayCountScreenImpl(
             ) {
                 Text(text = "Mám narok na ")
                 var text by remember { mutableStateOf("") }
-                OutlinedTextField(
+                TextField(
                     value = text,
                     onValueChange = { newValue ->
                         text = newValue.filter { it.isDigit() }.also {
                             onHolidayCountChanged(it.toIntOrNull() ?: 0)
                         }
                     },
-                    label = { Text(text = "20") },
+                    placeholder = { Text(text = "20") },
                     modifier = Modifier.width(64.dp),
                     keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Number),
                 )
@@ -92,7 +93,7 @@ private fun HolidayCountScreenImpl(
 @Preview(showBackground = true)
 @Composable
 fun DefaultPreview() {
-    ProdlouzeneVikendyTheme {
+    OrbitTheme {
         HolidayCountScreenImpl(
             onHolidayCountChanged = { },
             goToHolidayList = { }

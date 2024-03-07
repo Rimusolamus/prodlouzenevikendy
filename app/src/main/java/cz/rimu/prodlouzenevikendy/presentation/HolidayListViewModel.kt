@@ -7,6 +7,7 @@ import cz.rimu.prodlouzenevikendy.model.ExtendedPublicHoliday
 import cz.rimu.prodlouzenevikendy.model.HolidayRecommendation
 import cz.rimu.prodlouzenevikendy.model.PublicHoliday
 import cz.rimu.prodlouzenevikendy.model.toLocalDate
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -14,7 +15,7 @@ import java.text.SimpleDateFormat
 import java.time.LocalDate
 import java.util.*
 
-class AllHolidaysViewModel(
+class HolidayListViewModel(
     private val publicHolidaysRepository: PublicHolidaysRepository
 ) : ViewModel() {
 
@@ -23,8 +24,13 @@ class AllHolidaysViewModel(
     private val _extendedPublicHolidays = MutableStateFlow<List<ExtendedPublicHoliday>>(emptyList())
     val extendedPublicHolidays: StateFlow<List<ExtendedPublicHoliday>> = _extendedPublicHolidays
 
+    private val _isLoading = MutableStateFlow(false)
+    val isLoading: StateFlow<Boolean> = _isLoading
+
     init {
-        viewModelScope.launch {
+        _isLoading.value = true
+
+        viewModelScope.launch(Dispatchers.IO) {
             val list = publicHolidaysRepository.getPublicHolidays()
             _publicHolidays.value = list
 
@@ -40,9 +46,6 @@ class AllHolidaysViewModel(
             }
 
             val wholeYear = makeListOfWorkingDaysOfTheYear(_publicHolidays.value)
-//            val wholeYear =
-//                listOf(0,1,1,0,0,0,0,2,1,1,0,0,0,0,0,1,1,0)
-
             var holidayNumber = -1
 
             for (i in wholeYear.indices) {
@@ -65,6 +68,7 @@ class AllHolidaysViewModel(
                         (recommendToRight + recommendToLeft).sortedBy { it.size }
                 }
             }
+            _isLoading.value = false
         }
     }
 
@@ -229,7 +233,7 @@ class AllHolidaysViewModel(
         }
     }
 
-    enum class HolidayFinderDirection {
+    private enum class HolidayFinderDirection {
         LEFT, RIGHT
     }
 }

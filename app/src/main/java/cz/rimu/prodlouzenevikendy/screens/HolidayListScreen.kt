@@ -2,207 +2,169 @@ package cz.rimu.prodlouzenevikendy.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.*
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.kizitonwose.calendar.compose.HorizontalCalendar
-import com.kizitonwose.calendar.compose.rememberCalendarState
-import com.kizitonwose.calendar.core.CalendarDay
-import com.kizitonwose.calendar.core.daysOfWeek
-import com.kizitonwose.calendar.core.firstDayOfWeekFromLocale
 import cz.rimu.prodlouzenevikendy.model.ExtendedPublicHoliday
 import cz.rimu.prodlouzenevikendy.model.toLocalDate
 import cz.rimu.prodlouzenevikendy.model.toYearMonth
-import cz.rimu.prodlouzenevikendy.presentation.AllHolidaysViewModel
+import cz.rimu.prodlouzenevikendy.presentation.HolidayListViewModel
+import io.github.boguszpawlowski.composecalendar.StaticCalendar
+import io.github.boguszpawlowski.composecalendar.rememberCalendarState
+import kiwi.orbit.compose.ui.OrbitTheme
+import kiwi.orbit.compose.ui.controls.BadgeCircleInfo
+import kiwi.orbit.compose.ui.controls.Card
+import kiwi.orbit.compose.ui.controls.CircularProgressIndicator
+import kiwi.orbit.compose.ui.controls.Scaffold
+import kiwi.orbit.compose.ui.controls.Text
+import kiwi.orbit.compose.ui.controls.TopAppBar
 import org.koin.androidx.compose.getViewModel
-import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.YearMonth
-import java.time.format.TextStyle
+import java.util.Date
 import java.util.Locale
 
 @Composable
 fun HolidayListScreen(goBack: () -> Unit) {
-    val viewModel = getViewModel<AllHolidaysViewModel>()
+    val viewModel = getViewModel<HolidayListViewModel>()
     val publicHolidays = viewModel.extendedPublicHolidays.collectAsState()
-    HolidayListScreenImpl(publicHolidays.value, goBack)
+    val isLoading = viewModel.isLoading.collectAsState()
+    HolidayListScreenImpl(publicHolidays.value, isLoading.value, goBack)
 }
 
 @Composable
 private fun HolidayListScreenImpl(
-    publicHolidays: List<ExtendedPublicHoliday>,
-    goBack: () -> Unit
+    publicHolidays: List<ExtendedPublicHoliday> = emptyList(),
+    isLoading: Boolean = false,
+    goBack: () -> Unit = {}
 ) {
     Scaffold(
         topBar = {
             TopAppBar(
-                backgroundColor = MaterialTheme.colors.secondary,
-            ) {
-                IconButton(onClick = goBack) {
-                    Icon(
-                        imageVector = Icons.Default.ArrowBack,
-                        contentDescription = "Menu"
-                    )
-                }
-                Text(text = "Prodloužené víkendy")
-            }
+                title = { Text(text = "Prodloužené víkendy") },
+                onNavigateUp = goBack
+            )
         }) { paddingValues ->
-        Column {
-            Spacer(modifier = Modifier.height(8.dp))
-            LazyColumn(
-                modifier = Modifier.padding(
-                    top = paddingValues.calculateTopPadding(),
-                    start = 8.dp,
-                    end = 8.dp
-                )
-            ) {
-                items(publicHolidays.size) { index ->
-                    Card(
-                        modifier = Modifier
-                            .clickable { }
-                            .fillMaxWidth()
-                    ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Column(
-                                modifier = Modifier
-                                    .weight(1.0f)
-                            ) {
-                                Spacer(modifier = Modifier.height(8.dp))
-                                Text(
-                                    text = publicHolidays[index].name,
-                                    modifier = Modifier.padding(horizontal = 8.dp)
-                                )
-                                Text(
-                                    text = publicHolidays[index].localName,
-                                    modifier = Modifier.padding(horizontal = 8.dp)
-                                )
-                                Spacer(modifier = Modifier.height(8.dp))
-                            }
-                            Text(
-                                text = publicHolidays[index].date.toString(),
-                                modifier = Modifier
-                                    .weight(0.4f)
-                                    .align(Alignment.CenterVertically)
-                                    .padding(horizontal = 8.dp)
-                            )
-                        }
-                    }
-                    Spacer(modifier = Modifier.height(8.dp))
-                    val daysOfWeek = daysOfWeek()
-                    publicHolidays[index].recommendedDays.forEach { localDates ->
-                        Column {
-                            DaysOfWeekTitle(daysOfWeek = daysOfWeek)
-                            MyCalendar(publicHolidays[index], localDates)
-                        }
-                    }
-                    Spacer(modifier = Modifier.height(8.dp))
-                }
-            }
-        }
-    }
-}
 
-@Composable
-private fun MyCalendar(publicHoliday: ExtendedPublicHoliday, recommendedDates: List<LocalDate>) {
-    val currentMonth = remember { publicHoliday.date?.toYearMonth() ?: YearMonth.now() }
-    val startMonth =
-        remember {
-            currentMonth?.minusMonths(currentMonth.monthValue.toLong() - 1) ?: YearMonth.now()
-        } // Adjust as needed
-    val endMonth =
-        remember {
-            currentMonth?.plusMonths(12L - currentMonth.monthValue) ?: YearMonth.now()
-        } // Adjust as needed
-    val firstDayOfWeek = remember { firstDayOfWeekFromLocale() } // Available from the library
-
-    val state = rememberCalendarState(
-        startMonth = startMonth,
-        endMonth = endMonth,
-        firstVisibleMonth = currentMonth,
-        firstDayOfWeek = firstDayOfWeek
-    )
-    HorizontalCalendar(
-        state = state,
-        // Draw the day content gradient.
-        monthBody = { _, content ->
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-            ) {
-                content() // Render the provided content!
-            }
-        },
-        // Add the corners/borders and month width.
-        monthContainer = { _, container ->
-            val configuration = LocalConfiguration.current
-            val screenWidth = configuration.screenWidthDp.dp
+        if (isLoading) {
             Column(
                 modifier = Modifier
-                    .width(screenWidth * 0.98f)
-                    .padding(8.dp)
-                    .clip(shape = RoundedCornerShape(8.dp))
-                    .border(
-                        color = Color.Black,
-                        width = 1.dp,
-                        shape = RoundedCornerShape(8.dp)
-                    )
+                    .fillMaxSize()
+                    .padding(paddingValues),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                container() // Render the provided container!
+                CircularProgressIndicator()
             }
-        },
-        userScrollEnabled = true,
-        calendarScrollPaged = true,
-        dayContent = { day ->
-            if (day.date == publicHoliday.date?.toLocalDate() || recommendedDates.contains(day.date)) {
-                Day(day, isSelected = true)
-            } else {
-                Day(day)
+        } else {
+            Column {
+                Spacer(modifier = Modifier.height(8.dp))
+                LazyColumn(
+                    modifier = Modifier.padding(
+                        top = paddingValues.calculateTopPadding()
+                    )
+                ) {
+                    items(publicHolidays.size) { index ->
+                        Card(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .background(OrbitTheme.colors.primary.normal)
+                            ) {
+                                Column(
+                                    modifier = Modifier
+                                        .weight(1.0f)
+                                ) {
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                    Text(
+                                        text = publicHolidays[index].name,
+                                        color = OrbitTheme.colors.primary.onNormal,
+                                        style = OrbitTheme.typography.title5,
+                                        modifier = Modifier.padding(horizontal = 8.dp)
+                                    )
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                    Text(
+                                        text = publicHolidays[index].localName,
+                                        color = OrbitTheme.colors.primary.onNormal,
+                                        modifier = Modifier.padding(horizontal = 8.dp)
+                                    )
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                }
+                                Column(horizontalAlignment = Alignment.End, modifier = Modifier.padding(8.dp)) {
+                                    BadgeCircleInfo(value = publicHolidays[index].recommendedDays.size)
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                    Text(
+                                        text = publicHolidays[index].date?.toLocalDate()
+                                            ?.toShortString()
+                                            ?: "",
+                                        color = OrbitTheme.colors.primary.onNormal,
+                                        modifier = Modifier
+                                            .padding(horizontal = 8.dp)
+                                    )
+                                }
+                            }
+                        }
+                        Spacer(modifier = Modifier.height(8.dp))
+                        publicHolidays[index].recommendedDays.forEach { localDates ->
+                            StaticCalendar(
+                                calendarState = rememberCalendarState(
+                                    initialMonth = publicHolidays[index].date?.toYearMonth()
+                                        ?: YearMonth.now()
+                                ),
+                                dayContent = { day ->
+                                    if (localDates.contains(day.date) || publicHolidays[index].date?.toLocalDate() == day.date) {
+                                        OneDayBox(day.date.dayOfMonth.toString(), isSelected = true)
+                                    } else {
+                                        OneDayBox(
+                                            day.date.dayOfMonth.toString(),
+                                            isSelected = false
+                                        )
+                                    }
+                                },
+                                modifier = Modifier
+                                    .padding(horizontal = 16.dp)
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                        }
+                        Spacer(modifier = Modifier.height(8.dp))
+                    }
+                }
             }
-        }
-    )
-}
-
-@Composable
-fun DaysOfWeekTitle(daysOfWeek: List<DayOfWeek>) {
-    Row(modifier = Modifier.fillMaxWidth()) {
-        for (dayOfWeek in daysOfWeek) {
-            Text(
-                modifier = Modifier.weight(1f),
-                textAlign = TextAlign.Center,
-                text = dayOfWeek.getDisplayName(TextStyle.SHORT, Locale.getDefault()),
-            )
         }
     }
 }
 
 @Composable
-fun Day(day: CalendarDay, isSelected: Boolean = false) {
-    Box(
+private fun OneDayBox(dayText: String, isSelected: Boolean) {
+    Card(
         modifier = Modifier
-            .aspectRatio(1f)// This is important for square sizing!
-            .background(color = if (isSelected) MaterialTheme.colors.onSurface else Color.Transparent),
-        contentAlignment = Alignment.Center
+            .aspectRatio(1f)
+            .clip(RoundedCornerShape(8.dp))
+            .border(
+                1.dp,
+                if (isSelected) OrbitTheme.colors.primary.normal else Color.Transparent,
+                RoundedCornerShape(8.dp)
+            )
+
     ) {
-        Text(text = day.date.dayOfMonth.toString())
+        Text(text = dayText)
     }
+}
+
+private fun LocalDate.toShortString(): String {
+    return "${this.dayOfMonth} ${this.month}".lowercase(Locale.getDefault())
 }
 
 @Preview
@@ -211,30 +173,39 @@ fun HolidayListScreenPreview() {
     HolidayListScreenImpl(
         publicHolidays = listOf(
             ExtendedPublicHoliday(
-                    date = null,
-                    localName = "Den obnovy samostatného českého státu",
-                    name = "Den obnovy samostatného českého státu",
-                    recommendedDays = listOf()
-            ),
-            ExtendedPublicHoliday(
-                date = null,
+                date = Date(),
                 localName = "Den obnovy samostatného českého státu",
                 name = "Den obnovy samostatného českého státu",
                 recommendedDays = listOf()
             ),
             ExtendedPublicHoliday(
-                date = null,
+                date = Date(),
                 localName = "Den obnovy samostatného českého státu",
                 name = "Den obnovy samostatného českého státu",
                 recommendedDays = listOf()
             ),
             ExtendedPublicHoliday(
-                date = null,
+                date = Date(),
+                localName = "Den obnovy samostatného českého státu",
+                name = "Den obnovy samostatného českého státu",
+                recommendedDays = listOf()
+            ),
+            ExtendedPublicHoliday(
+                date = Date(),
                 localName = "Den obnovy samostatného českého státu",
                 name = "Den obnovy samostatného českého státu",
                 recommendedDays = listOf()
             )
         ),
+        isLoading = false,
         goBack = {}
+    )
+}
+
+@Preview
+@Composable
+fun HolidayListScreenPreviewLoading() {
+    HolidayListScreenImpl(
+        isLoading = true
     )
 }

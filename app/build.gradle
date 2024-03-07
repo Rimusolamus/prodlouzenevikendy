@@ -5,12 +5,12 @@ plugins {
 
 android {
     namespace 'cz.rimu.prodlouzenevikendy'
-    compileSdk 33
+    compileSdk 34
 
     defaultConfig {
         applicationId "cz.rimu.prodlouzenevikendy"
         minSdk 23
-        targetSdk 33
+        targetSdk 34
         versionCode 1
         versionName "1.0"
 
@@ -50,16 +50,16 @@ android {
 }
 
 dependencies {
-    coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.0.3'
-    implementation 'androidx.core:core-ktx:1.10.0'
-    implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.6.1'
-    implementation 'androidx.activity:activity-compose:1.7.1'
+    coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.0.4'
+    implementation 'androidx.core:core-ktx:1.12.0'
+    implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.7.0'
+    implementation 'androidx.activity:activity-compose:1.8.2'
     implementation "androidx.compose.ui:ui:$compose_ui_version"
     implementation "androidx.compose.ui:ui-tooling-preview:$compose_ui_version"
-    implementation 'androidx.compose.material:material:1.4.2'
+    implementation 'androidx.compose.material:material:1.6.3'
 
     // compose calendar
-    implementation 'com.kizitonwose.calendar:compose:2.3.0'
+    implementation "io.github.boguszpawlowski.composecalendar:composecalendar:1.2.0"
 
     // koin
     implementation 'io.insert-koin:koin-android:3.3.2'
@@ -67,14 +67,19 @@ dependencies {
     implementation 'io.insert-koin:koin-androidx-compose:3.4.1'
 
     // moshi
-    implementation 'com.squareup.moshi:moshi-kotlin:1.12.0'
+    implementation 'com.squareup.moshi:moshi-kotlin:1.15.0'
 
     // retrofit
     implementation 'com.squareup.retrofit2:retrofit:2.9.0'
     implementation 'com.squareup.retrofit2:converter-moshi:2.9.0'
 
     // navigation
-    implementation "androidx.navigation:navigation-compose:2.6.0-beta01"
+    implementation "androidx.navigation:navigation-compose:2.7.7"
+
+    // orbit
+    implementation "kiwi.orbit.compose:ui:0.35.1"
+    implementation "kiwi.orbit.compose:icons:0.35.1"
+    implementation "kiwi.orbit.compose:illustrations:0.35.1"
 
     testImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test.ext:junit:1.1.5'

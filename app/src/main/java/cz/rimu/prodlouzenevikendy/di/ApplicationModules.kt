@@ -7,7 +7,7 @@ import cz.rimu.prodlouzenevikendy.data.RemotePublicHolidayRepository
 import cz.rimu.prodlouzenevikendy.domain.HolidayCountRepository
 import cz.rimu.prodlouzenevikendy.domain.PublicHolidaysRepository
 import cz.rimu.prodlouzenevikendy.model.Api
-import cz.rimu.prodlouzenevikendy.presentation.AllHolidaysViewModel
+import cz.rimu.prodlouzenevikendy.presentation.HolidayListViewModel
 import cz.rimu.prodlouzenevikendy.presentation.HolidayCountViewModel
 import org.koin.androidx.viewmodel.dsl.viewModelOf
 import org.koin.core.module.dsl.singleOf
@@ -32,7 +32,7 @@ fun provideRetrofit(): Retrofit {
 fun provideRestApi(retrofit: Retrofit): Api = retrofit.create(Api::class.java)
 
 val appModule = module {
-    viewModelOf(::AllHolidaysViewModel)
+    viewModelOf(::HolidayListViewModel)
     viewModelOf(::HolidayCountViewModel)
 
     singleOf(::RemotePublicHolidayRepository) bind PublicHolidaysRepository::class
