@@ -19,16 +19,18 @@ class HolidayListViewModel(
     private val publicHolidaysRepository: PublicHolidaysRepository
 ) : ViewModel() {
 
+    private val _state = MutableStateFlow(
+        State(
+            isLoading = true,
+            extendedPublicHolidays = emptyList()
+        )
+    )
+    val state: StateFlow<State> = _state
+
     private val _publicHolidays = MutableStateFlow<List<PublicHoliday>>(emptyList())
 
-    private val _extendedPublicHolidays = MutableStateFlow<List<ExtendedPublicHoliday>>(emptyList())
-    val extendedPublicHolidays: StateFlow<List<ExtendedPublicHoliday>> = _extendedPublicHolidays
-
-    private val _isLoading = MutableStateFlow(false)
-    val isLoading: StateFlow<Boolean> = _isLoading
-
     init {
-        _isLoading.value = true
+        _state.value = state.value.copy(isLoading = true)
 
         viewModelScope.launch(Dispatchers.IO) {
             val list = publicHolidaysRepository.getPublicHolidays()
@@ -39,10 +41,10 @@ class HolidayListViewModel(
                     name = publicHoliday.name,
                     localName = publicHoliday.localName,
                     date = parseDateString(publicHoliday.date),
-                    recommendedDays = listOf()
+                    recommendedDays = listOf(),
+                    isVisible = false
                 )
-                _extendedPublicHolidays.value =
-                    _extendedPublicHolidays.value + extendedPublicHoliday
+                _state.value = state.value.copy(extendedPublicHolidays = state.value.extendedPublicHolidays + extendedPublicHoliday)
             }
 
             val wholeYear = makeListOfWorkingDaysOfTheYear(_publicHolidays.value)
@@ -64,12 +66,22 @@ class HolidayListViewModel(
                             holidaysIndexes,
                             HolidayFinderDirection.LEFT
                         )
-                    _extendedPublicHolidays.value[holidayNumber].recommendedDays =
+                    state.value.extendedPublicHolidays[holidayNumber].recommendedDays =
                         (recommendToRight + recommendToLeft).sortedBy { it.size }
                 }
             }
-            _isLoading.value = false
+            _state.value = state.value.copy(isLoading = false)
         }
+    }
+
+    fun toggleHolidayVisibility(index: Int) {
+        _state.value = state.value.copy(extendedPublicHolidays = state.value.extendedPublicHolidays.mapIndexed { i, extendedPublicHoliday ->
+            if (i == index) {
+                extendedPublicHoliday.copy(isVisible = !extendedPublicHoliday.isVisible)
+            } else {
+                extendedPublicHoliday
+            }
+        })
     }
 
     private fun getRecommended(
@@ -236,4 +248,9 @@ class HolidayListViewModel(
     private enum class HolidayFinderDirection {
         LEFT, RIGHT
     }
+
+    data class State(
+        val isLoading: Boolean,
+        val extendedPublicHolidays: List<ExtendedPublicHoliday>
+    )
 }

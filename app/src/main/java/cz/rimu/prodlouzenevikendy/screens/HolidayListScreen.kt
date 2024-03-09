@@ -5,6 +5,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.IconToggleButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
@@ -19,10 +20,12 @@ import cz.rimu.prodlouzenevikendy.model.toYearMonth
 import cz.rimu.prodlouzenevikendy.presentation.HolidayListViewModel
 import io.github.boguszpawlowski.composecalendar.StaticCalendar
 import io.github.boguszpawlowski.composecalendar.rememberCalendarState
+import kiwi.orbit.compose.icons.Icons
 import kiwi.orbit.compose.ui.OrbitTheme
 import kiwi.orbit.compose.ui.controls.BadgeCircleInfo
 import kiwi.orbit.compose.ui.controls.Card
 import kiwi.orbit.compose.ui.controls.CircularProgressIndicator
+import kiwi.orbit.compose.ui.controls.Icon
 import kiwi.orbit.compose.ui.controls.Scaffold
 import kiwi.orbit.compose.ui.controls.Text
 import kiwi.orbit.compose.ui.controls.TopAppBar
@@ -35,16 +38,21 @@ import java.util.Locale
 @Composable
 fun HolidayListScreen(goBack: () -> Unit) {
     val viewModel = getViewModel<HolidayListViewModel>()
-    val publicHolidays = viewModel.extendedPublicHolidays.collectAsState()
-    val isLoading = viewModel.isLoading.collectAsState()
-    HolidayListScreenImpl(publicHolidays.value, isLoading.value, goBack)
+    val state = viewModel.state.collectAsState()
+    HolidayListScreenImpl(
+        publicHolidays = state.value.extendedPublicHolidays,
+        isLoading = state.value.isLoading,
+        goBack = goBack,
+        toggleHolidayVisibility = viewModel::toggleHolidayVisibility
+    )
 }
 
 @Composable
 private fun HolidayListScreenImpl(
     publicHolidays: List<ExtendedPublicHoliday> = emptyList(),
     isLoading: Boolean = false,
-    goBack: () -> Unit = {}
+    goBack: () -> Unit = {},
+    toggleHolidayVisibility: (Int) -> Unit = {}
 ) {
     Scaffold(
         topBar = {
@@ -83,6 +91,23 @@ private fun HolidayListScreenImpl(
                                     .fillMaxWidth()
                                     .background(OrbitTheme.colors.primary.normal)
                             ) {
+                                IconToggleButton(
+                                    checked = publicHolidays[index].isVisible,
+                                    onCheckedChange = { toggleHolidayVisibility(index) }) {
+                                    if (publicHolidays[index].isVisible) {
+                                        Icon(
+                                            painter = Icons.ArrowUp,
+                                            tint = OrbitTheme.colors.primary.onNormal,
+                                            contentDescription = "show/hide"
+                                        )
+                                    } else {
+                                        Icon(
+                                            painter = Icons.ArrowDown,
+                                            tint = OrbitTheme.colors.primary.onNormal,
+                                            contentDescription = "show/hide"
+                                        )
+                                    }
+                                }
                                 Column(
                                     modifier = Modifier
                                         .weight(1.0f)
@@ -102,7 +127,10 @@ private fun HolidayListScreenImpl(
                                     )
                                     Spacer(modifier = Modifier.height(8.dp))
                                 }
-                                Column(horizontalAlignment = Alignment.End, modifier = Modifier.padding(8.dp)) {
+                                Column(
+                                    horizontalAlignment = Alignment.End,
+                                    modifier = Modifier.padding(8.dp)
+                                ) {
                                     BadgeCircleInfo(value = publicHolidays[index].recommendedDays.size)
                                     Spacer(modifier = Modifier.height(8.dp))
                                     Text(
@@ -116,29 +144,32 @@ private fun HolidayListScreenImpl(
                                 }
                             }
                         }
-                        Spacer(modifier = Modifier.height(8.dp))
-                        publicHolidays[index].recommendedDays.forEach { localDates ->
-                            StaticCalendar(
-                                calendarState = rememberCalendarState(
-                                    initialMonth = publicHolidays[index].date?.toYearMonth()
-                                        ?: YearMonth.now()
-                                ),
-                                dayContent = { day ->
-                                    if (localDates.contains(day.date) || publicHolidays[index].date?.toLocalDate() == day.date) {
-                                        OneDayBox(day.date.dayOfMonth.toString(), isSelected = true)
-                                    } else {
-                                        OneDayBox(
-                                            day.date.dayOfMonth.toString(),
-                                            isSelected = false
-                                        )
-                                    }
-                                },
-                                modifier = Modifier
-                                    .padding(horizontal = 16.dp)
-                            )
-                            Spacer(modifier = Modifier.height(8.dp))
+                        if (publicHolidays[index].isVisible) {
+                            publicHolidays[index].recommendedDays.forEach { localDates ->
+                                StaticCalendar(
+                                    calendarState = rememberCalendarState(
+                                        initialMonth = publicHolidays[index].date?.toYearMonth()
+                                            ?: YearMonth.now()
+                                    ),
+                                    dayContent = { day ->
+                                        if (localDates.contains(day.date) || publicHolidays[index].date?.toLocalDate() == day.date) {
+                                            OneDayBox(
+                                                day.date.dayOfMonth.toString(),
+                                                isSelected = true
+                                            )
+                                        } else {
+                                            OneDayBox(
+                                                day.date.dayOfMonth.toString(),
+                                                isSelected = false
+                                            )
+                                        }
+                                    },
+                                    modifier = Modifier
+                                        .padding(horizontal = 16.dp)
+                                )
+                                Spacer(modifier = Modifier.height(8.dp))
+                            }
                         }
-                        Spacer(modifier = Modifier.height(8.dp))
                     }
                 }
             }
@@ -176,25 +207,29 @@ fun HolidayListScreenPreview() {
                 date = Date(),
                 localName = "Den obnovy samostatného českého státu",
                 name = "Den obnovy samostatného českého státu",
-                recommendedDays = listOf()
+                recommendedDays = listOf(),
+                isVisible = false
             ),
             ExtendedPublicHoliday(
                 date = Date(),
                 localName = "Den obnovy samostatného českého státu",
                 name = "Den obnovy samostatného českého státu",
-                recommendedDays = listOf()
+                recommendedDays = listOf(),
+                isVisible = false
             ),
             ExtendedPublicHoliday(
                 date = Date(),
                 localName = "Den obnovy samostatného českého státu",
                 name = "Den obnovy samostatného českého státu",
-                recommendedDays = listOf()
+                recommendedDays = listOf(),
+                isVisible = false
             ),
             ExtendedPublicHoliday(
                 date = Date(),
                 localName = "Den obnovy samostatného českého státu",
                 name = "Den obnovy samostatného českého státu",
-                recommendedDays = listOf()
+                recommendedDays = listOf(),
+                isVisible = false
             )
         ),
         isLoading = false,

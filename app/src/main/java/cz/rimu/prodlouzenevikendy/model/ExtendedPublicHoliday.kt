@@ -5,11 +5,13 @@ import java.time.YearMonth
 import java.util.Calendar
 import java.util.Date
 
+// todo: all have to be val you lazy cunt
 data class ExtendedPublicHoliday(
     val localName: String,
     val name: String,
     var date: Date?,
-    var recommendedDays: List<List<LocalDate>>
+    var recommendedDays: List<List<LocalDate>>,
+    var isVisible: Boolean
 )
 
 // from Date to YearMonth
