@@ -32,8 +32,8 @@ fun provideRetrofit(): Retrofit {
 fun provideRestApi(retrofit: Retrofit): Api = retrofit.create(Api::class.java)
 
 val appModule = module {
-    viewModelOf(::HolidayListViewModel)
     viewModelOf(::HolidayCountViewModel)
+    viewModelOf(::HolidayListViewModel)
 
     singleOf(::RemotePublicHolidayRepository) bind PublicHolidaysRepository::class
     singleOf(::LocalHolidayCountRepository) bind HolidayCountRepository::class

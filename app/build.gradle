@@ -59,7 +59,7 @@ dependencies {
     implementation 'androidx.compose.material:material:1.6.3'
 
     // compose calendar
-    implementation "io.github.boguszpawlowski.composecalendar:composecalendar:1.1.0"
+    implementation "io.github.boguszpawlowski.composecalendar:composecalendar:1.2.0"
 
     // koin
     implementation 'io.insert-koin:koin-android:3.3.2'

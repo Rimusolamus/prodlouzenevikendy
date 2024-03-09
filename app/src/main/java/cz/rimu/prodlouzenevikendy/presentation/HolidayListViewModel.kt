@@ -26,7 +26,6 @@ class HolidayListViewModel(
         )
     )
     val state: StateFlow<State> = _state
-
     private val _publicHolidays = MutableStateFlow<List<PublicHoliday>>(emptyList())
 
     init {
