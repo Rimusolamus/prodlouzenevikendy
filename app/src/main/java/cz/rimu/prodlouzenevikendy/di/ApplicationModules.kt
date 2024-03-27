@@ -10,6 +10,7 @@ import cz.rimu.prodlouzenevikendy.model.Api
 import cz.rimu.prodlouzenevikendy.presentation.HolidayListViewModel
 import cz.rimu.prodlouzenevikendy.presentation.HolidayCountViewModel
 import org.koin.androidx.viewmodel.dsl.viewModelOf
+import org.koin.core.module.dsl.factoryOf
 import org.koin.core.module.dsl.singleOf
 import org.koin.dsl.bind
 import org.koin.dsl.module
@@ -21,7 +22,7 @@ val networkModule = module {
     single { provideRetrofit() }
 }
 
-fun provideRetrofit(): Retrofit {
+private fun provideRetrofit(): Retrofit {
     val moshi = Moshi.Builder()
         .add(KotlinJsonAdapterFactory())
         .build()
@@ -29,12 +30,12 @@ fun provideRetrofit(): Retrofit {
         .addConverterFactory(MoshiConverterFactory.create(moshi)).build()
 }
 
-fun provideRestApi(retrofit: Retrofit): Api = retrofit.create(Api::class.java)
+private fun provideRestApi(retrofit: Retrofit): Api = retrofit.create(Api::class.java)
 
 val appModule = module {
     viewModelOf(::HolidayCountViewModel)
     viewModelOf(::HolidayListViewModel)
 
-    singleOf(::RemotePublicHolidayRepository) bind PublicHolidaysRepository::class
-    singleOf(::LocalHolidayCountRepository) bind HolidayCountRepository::class
+    factoryOf(::RemotePublicHolidayRepository) bind PublicHolidaysRepository::class
+    factoryOf(::LocalHolidayCountRepository) bind HolidayCountRepository::class
 }

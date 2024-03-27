@@ -16,7 +16,7 @@ import java.time.LocalDate
 import java.util.*
 
 class HolidayListViewModel(
-    private val publicHolidaysRepository: PublicHolidaysRepository
+    publicHolidaysRepository: PublicHolidaysRepository
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(
@@ -65,8 +65,15 @@ class HolidayListViewModel(
                             holidaysIndexes,
                             HolidayFinderDirection.LEFT
                         )
-                    state.value.extendedPublicHolidays[holidayNumber].recommendedDays =
-                        (recommendToRight + recommendToLeft).sortedBy { it.size }
+                    _state.value = _state.value.copy(extendedPublicHolidays = _state.value.extendedPublicHolidays.mapIndexed { index, extendedPublicHoliday ->
+                        if (index == holidayNumber) {
+                            extendedPublicHoliday.copy(
+                                recommendedDays = (recommendToRight + recommendToLeft).sortedBy { it.size }
+                            )
+                        } else {
+                            extendedPublicHoliday
+                        }
+                    })
                 }
             }
             _state.value = state.value.copy(isLoading = false)
