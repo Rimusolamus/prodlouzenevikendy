@@ -9,12 +9,14 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.IconToggleButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.util.fastFirstOrNull
 import androidx.compose.ui.util.fastForEachIndexed
 import cz.rimu.prodlouzenevikendy.model.ExtendedPublicHoliday
 import cz.rimu.prodlouzenevikendy.model.Recommendation
@@ -106,23 +108,27 @@ private fun HolidayListScreenImpl(
                     .padding(horizontal = 16.dp)
             ) {
                 item { Spacer(modifier = Modifier.height(8.dp)) }
-                items(publicHolidays.size) { index ->
-                    if (publicHolidays[index].recommendedDays.isNotEmpty()) {
+                items(
+                    count = publicHolidays.size,
+                    key = { index -> publicHolidays[index].name }
+                ) { index ->
+                    val publicHoliday = publicHolidays[index]
+                    if (publicHoliday.recommendedDays.isNotEmpty()) {
                         HolidayRow(
                             index = index,
-                            isVisible = publicHolidays[index].isVisible,
-                            name = publicHolidays[index].name,
-                            localName = publicHolidays[index].localName,
-                            numberOfDays = publicHolidays[index].recommendedDays.size,
-                            date = publicHolidays[index].date,
+                            isVisible = publicHoliday.isVisible,
+                            name = publicHoliday.name,
+                            localName = publicHoliday.localName,
+                            numberOfDays = publicHoliday.recommendedDays.size,
+                            date = publicHoliday.date,
                             toggleHolidayVisibility = toggleHolidayVisibility
                         )
                         Spacer(modifier = Modifier.height(8.dp))
-                        if (publicHolidays[index].isVisible) {
-                            publicHolidays[index].recommendedDays.fastForEachIndexed { calendarIndex, localDates ->
+                        if (publicHoliday.isVisible) {
+                            publicHoliday.recommendedDays.fastForEachIndexed { calendarIndex, localDates ->
                                 StaticCalendar(
                                     calendarState = rememberCalendarState(
-                                        initialMonth = publicHolidays[index].date?.toYearMonth()
+                                        initialMonth = publicHoliday.date?.toYearMonth()
                                             ?: YearMonth.now()
                                     ),
                                     monthHeader = { month ->
@@ -276,7 +282,7 @@ private fun DayContent(
     publicHolidays: List<ExtendedPublicHoliday>
 ) {
     if (recommendation.days.contains(day.date)) {
-        if (publicHolidays.find { it.date?.toLocalDate() == day.date } != null) {
+        if (publicHolidays.fastFirstOrNull { it.date?.toLocalDate() == day.date } != null) {
             OneDayBox(
                 day.date.dayOfMonth.toString(),
                 isSelected = true,

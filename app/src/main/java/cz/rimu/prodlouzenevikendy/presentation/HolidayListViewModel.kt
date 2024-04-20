@@ -160,16 +160,17 @@ class HolidayListViewModel(
         }
     }
 
-    // TODO investigate how to improve performance showing multiple calendars. WHERE IS THE POOP, ROBIN?
     fun toggleHolidayVisibility(index: Int) {
-        _state.value =
-            state.value.copy(extendedPublicHolidays = state.value.extendedPublicHolidays.mapIndexed { i, extendedPublicHoliday ->
-                if (i == index) {
-                    extendedPublicHoliday.copy(isVisible = !extendedPublicHoliday.isVisible)
-                } else {
-                    extendedPublicHoliday
-                }
-            })
+        viewModelScope.launch(Dispatchers.IO) {
+            _state.value =
+                state.value.copy(extendedPublicHolidays = state.value.extendedPublicHolidays.mapIndexed { i, extendedPublicHoliday ->
+                    if (i == index) {
+                        extendedPublicHoliday.copy(isVisible = !extendedPublicHoliday.isVisible)
+                    } else {
+                        extendedPublicHoliday
+                    }
+                })
+        }
     }
 
     private fun getRecommended(
