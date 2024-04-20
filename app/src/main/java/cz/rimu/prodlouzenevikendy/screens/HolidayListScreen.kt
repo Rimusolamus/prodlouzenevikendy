@@ -17,6 +17,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.fastForEachIndexed
 import cz.rimu.prodlouzenevikendy.model.ExtendedPublicHoliday
+import cz.rimu.prodlouzenevikendy.model.Recommendation
 import cz.rimu.prodlouzenevikendy.model.toLocalDate
 import cz.rimu.prodlouzenevikendy.model.toYearMonth
 import cz.rimu.prodlouzenevikendy.presentation.HolidayListViewModel
@@ -28,6 +29,8 @@ import io.github.boguszpawlowski.composecalendar.selection.EmptySelectionState
 import kiwi.orbit.compose.icons.Icons
 import kiwi.orbit.compose.ui.OrbitTheme
 import kiwi.orbit.compose.ui.controls.BadgeCircleInfo
+import kiwi.orbit.compose.ui.controls.ButtonCriticalSubtle
+import kiwi.orbit.compose.ui.controls.ButtonPrimary
 import kiwi.orbit.compose.ui.controls.ButtonPrimarySubtle
 import kiwi.orbit.compose.ui.controls.Card
 import kiwi.orbit.compose.ui.controls.CircularProgressIndicator
@@ -48,9 +51,10 @@ fun HolidayListScreen(goBack: () -> Unit) {
     HolidayListScreenImpl(
         publicHolidays = state.value.extendedPublicHolidays,
         isLoading = state.value.isLoading,
+        vacationDaysLeft = state.value.vacationDaysLeft,
         goBack = goBack,
         toggleHolidayVisibility = viewModel::toggleHolidayVisibility,
-        onCalendarSelected = viewModel::onCalendarSelected
+        toggleCalendarSelection = viewModel::toggleCalendarSelection
     )
 }
 
@@ -60,7 +64,8 @@ private fun HolidayListScreenImpl(
     isLoading: Boolean = false,
     goBack: () -> Unit = {},
     toggleHolidayVisibility: (Int) -> Unit = {},
-    onCalendarSelected: (Int, Int) -> Unit = { _, _ -> }
+    toggleCalendarSelection: (Int, Int, Boolean) -> Unit = { _, _, _ -> },
+    vacationDaysLeft: Int = 0
 ) {
     Scaffold(
         topBar = {
@@ -68,8 +73,22 @@ private fun HolidayListScreenImpl(
                 title = { Text(text = "Prodloužené víkendy") },
                 onNavigateUp = goBack
             )
-        }) { paddingValues ->
-
+        },
+        actionLayout = {
+            Row(modifier = Modifier.padding(vertical = 8.dp, horizontal = 16.dp)) {
+                Text(
+                    text = "Zbyva: $vacationDaysLeft",
+                    style = OrbitTheme.typography.title5,
+                    color = OrbitTheme.colors.primary.normal,
+                    modifier = Modifier.align(Alignment.CenterVertically)
+                )
+                Spacer(modifier = Modifier.weight(1f))
+                ButtonPrimary(onClick = {}) {
+                    Text(text = "Podivat se na vysledky")
+                }
+            }
+        }
+    ) { paddingValues ->
         if (isLoading) {
             Column(
                 modifier = Modifier
@@ -91,7 +110,11 @@ private fun HolidayListScreenImpl(
                     if (publicHolidays[index].recommendedDays.isNotEmpty()) {
                         HolidayRow(
                             index = index,
-                            publicHolidays = publicHolidays,
+                            isVisible = publicHolidays[index].isVisible,
+                            name = publicHolidays[index].name,
+                            localName = publicHolidays[index].localName,
+                            numberOfDays = publicHolidays[index].recommendedDays.size,
+                            date = publicHolidays[index].date,
                             toggleHolidayVisibility = toggleHolidayVisibility
                         )
                         Spacer(modifier = Modifier.height(8.dp))
@@ -105,15 +128,16 @@ private fun HolidayListScreenImpl(
                                     monthHeader = { month ->
                                         MonthHeader(
                                             month = month,
-                                            onCalendarSelected = onCalendarSelected,
+                                            toggleCalendarSelection = toggleCalendarSelection,
                                             index = index,
-                                            calendarIndex = calendarIndex
+                                            calendarIndex = calendarIndex,
+                                            isSelected = localDates.isSelected
                                         )
                                     },
                                     dayContent = { day ->
                                         DayContent(
                                             day = day,
-                                            localDates = localDates,
+                                            recommendation = localDates,
                                             publicHolidays = publicHolidays
                                         )
                                     },
@@ -133,29 +157,33 @@ private fun HolidayListScreenImpl(
 @Composable
 private fun HolidayRow(
     index: Int,
-    publicHolidays: List<ExtendedPublicHoliday>,
+    isVisible: Boolean,
+    name: String,
+    localName: String,
+    numberOfDays: Int,
+    date: Date?,
     toggleHolidayVisibility: (Int) -> Unit
 ) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
             .fillMaxWidth()
-            .background(OrbitTheme.colors.primary.normal)
+            .background(OrbitTheme.colors.info.subtle)
             .clickable { toggleHolidayVisibility(index) }
     ) {
         IconToggleButton(
-            checked = publicHolidays[index].isVisible,
+            checked = isVisible,
             onCheckedChange = { toggleHolidayVisibility(index) }) {
-            if (publicHolidays[index].isVisible) {
+            if (isVisible) {
                 Icon(
                     painter = Icons.ArrowUp,
-                    tint = OrbitTheme.colors.primary.onNormal,
+                    tint = OrbitTheme.colors.content.normal,
                     contentDescription = "show/hide"
                 )
             } else {
                 Icon(
                     painter = Icons.ArrowDown,
-                    tint = OrbitTheme.colors.primary.onNormal,
+                    tint = OrbitTheme.colors.content.normal,
                     contentDescription = "show/hide"
                 )
             }
@@ -166,15 +194,15 @@ private fun HolidayRow(
         ) {
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                text = publicHolidays[index].name,
-                color = OrbitTheme.colors.primary.onNormal,
+                text = name,
+                color = OrbitTheme.colors.content.normal,
                 style = OrbitTheme.typography.title5,
                 modifier = Modifier.padding(horizontal = 8.dp)
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                text = publicHolidays[index].localName,
-                color = OrbitTheme.colors.primary.onNormal,
+                text = localName,
+                color = OrbitTheme.colors.content.normal,
                 modifier = Modifier.padding(horizontal = 8.dp)
             )
             Spacer(modifier = Modifier.height(8.dp))
@@ -183,13 +211,13 @@ private fun HolidayRow(
             horizontalAlignment = Alignment.End,
             modifier = Modifier.padding(8.dp)
         ) {
-            BadgeCircleInfo(value = publicHolidays[index].recommendedDays.size)
+            BadgeCircleInfo(value = numberOfDays)
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                text = publicHolidays[index].date?.toLocalDate()
+                text = date?.toLocalDate()
                     ?.toShortString()
                     ?: "",
-                color = OrbitTheme.colors.primary.onNormal,
+                color = OrbitTheme.colors.content.normal,
                 modifier = Modifier
                     .padding(horizontal = 8.dp)
             )
@@ -200,9 +228,10 @@ private fun HolidayRow(
 @Composable
 private fun MonthHeader(
     month: MonthState,
-    onCalendarSelected: (Int, Int) -> Unit = { _, _ -> },
+    toggleCalendarSelection: (Int, Int, Boolean) -> Unit = { _, _, _ -> },
     index: Int,
-    calendarIndex: Int
+    calendarIndex: Int,
+    isSelected: Boolean
 ) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
@@ -216,13 +245,26 @@ private fun MonthHeader(
             color = OrbitTheme.colors.primary.normal
         )
         Spacer(modifier = Modifier.weight(1f))
-        ButtonPrimarySubtle(onClick = {
-            onCalendarSelected(
-                index,
-                calendarIndex
-            )
-        }) {
-            Text(text = "Přidat do kalendáře")
+        if (isSelected) {
+            ButtonCriticalSubtle(onClick = {
+                toggleCalendarSelection(
+                    index,
+                    calendarIndex,
+                    false
+                )
+            }) {
+                Text(text = "Odebrat z kalendáře")
+            }
+        } else {
+            ButtonPrimarySubtle(onClick = {
+                toggleCalendarSelection(
+                    index,
+                    calendarIndex,
+                    true
+                )
+            }) {
+                Text(text = "Přidat do kalendáře")
+            }
         }
     }
 }
@@ -230,10 +272,10 @@ private fun MonthHeader(
 @Composable
 private fun DayContent(
     day: DayState<EmptySelectionState>,
-    localDates: List<LocalDate>,
+    recommendation: Recommendation,
     publicHolidays: List<ExtendedPublicHoliday>
 ) {
-    if (localDates.contains(day.date)) {
+    if (recommendation.days.contains(day.date)) {
         if (publicHolidays.find { it.date?.toLocalDate() == day.date } != null) {
             OneDayBox(
                 day.date.dayOfMonth.toString(),

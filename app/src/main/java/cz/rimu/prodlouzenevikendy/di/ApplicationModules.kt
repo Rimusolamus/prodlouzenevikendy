@@ -37,5 +37,5 @@ val appModule = module {
     viewModelOf(::HolidayListViewModel)
 
     factoryOf(::RemotePublicHolidayRepository) bind PublicHolidaysRepository::class
-    factoryOf(::LocalHolidayCountRepository) bind HolidayCountRepository::class
+    singleOf(::LocalHolidayCountRepository) bind HolidayCountRepository::class
 }

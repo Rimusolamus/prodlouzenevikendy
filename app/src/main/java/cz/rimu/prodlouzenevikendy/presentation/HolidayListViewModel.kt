@@ -8,12 +8,14 @@ import cz.rimu.prodlouzenevikendy.domain.PublicHolidaysRepository
 import cz.rimu.prodlouzenevikendy.model.ExtendedPublicHoliday
 import cz.rimu.prodlouzenevikendy.model.HolidayRecommendation
 import cz.rimu.prodlouzenevikendy.model.PublicHoliday
+import cz.rimu.prodlouzenevikendy.model.Recommendation
 import cz.rimu.prodlouzenevikendy.model.toLocalDate
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
+import java.time.DayOfWeek
 import java.time.LocalDate
 import java.util.*
 
@@ -33,9 +35,16 @@ class HolidayListViewModel(
 
     init {
         _state.value = state.value.copy(
-            isLoading = true,
-            vacationDaysLeft = holidayCountRepository.holidayCount
+            isLoading = true
         )
+
+        viewModelScope.launch {
+            holidayCountRepository.holidayCount.collect {
+                _state.value = _state.value.copy(
+                    vacationDaysLeft = it
+                )
+            }
+        }
 
         viewModelScope.launch(Dispatchers.IO) {
             val list = publicHolidaysRepository.getPublicHolidays()
@@ -77,6 +86,7 @@ class HolidayListViewModel(
                             if (index == holidayNumber) {
                                 extendedPublicHoliday.copy(
                                     recommendedDays = (recommendToRight + recommendToLeft).sortedBy { it.size }
+                                        .toRecommendationList()
                                 )
                             } else {
                                 extendedPublicHoliday
@@ -88,8 +98,66 @@ class HolidayListViewModel(
         }
     }
 
-    fun onCalendarSelected(publicHolidayIndex: Int, calendarIndex: Int) {
-
+    fun toggleCalendarSelection(publicHolidayIndex: Int, calendarIndex: Int, isAdding: Boolean) {
+        val extendedPublicHoliday = state.value.extendedPublicHolidays[publicHolidayIndex]
+        val recommendedDays = extendedPublicHoliday.recommendedDays[calendarIndex]
+        if (isAdding) {
+            viewModelScope.launch(Dispatchers.IO) {
+                recommendedDays.days.forEach { day ->
+                    if (day.dayOfWeek != DayOfWeek.SATURDAY && day.dayOfWeek != DayOfWeek.SUNDAY && state.value.extendedPublicHolidays.find { it.date?.toLocalDate() == day } == null) {
+                        _state.value =
+                            state.value.copy(
+                                vacationDaysLeft = state.value.vacationDaysLeft - 1,
+                            )
+                    }
+                }
+                _state.value = state.value.copy(
+                    extendedPublicHolidays = state.value.extendedPublicHolidays.mapIndexed { index, extendedPublicHoliday ->
+                        if (index == publicHolidayIndex) {
+                            extendedPublicHoliday.copy(
+                                recommendedDays = extendedPublicHoliday.recommendedDays.mapIndexed { i, recommendation ->
+                                    if (i == calendarIndex) {
+                                        recommendation.copy(isSelected = true)
+                                    } else {
+                                        recommendation
+                                    }
+                                }
+                            )
+                        } else {
+                            extendedPublicHoliday
+                        }
+                    }
+                )
+            }
+        } else {
+            viewModelScope.launch(Dispatchers.IO) {
+                recommendedDays.days.forEach { day ->
+                    if (day.dayOfWeek != DayOfWeek.SATURDAY && day.dayOfWeek != DayOfWeek.SUNDAY && state.value.extendedPublicHolidays.find { it.date?.toLocalDate() == day } == null) {
+                        _state.value =
+                            state.value.copy(
+                                vacationDaysLeft = state.value.vacationDaysLeft + 1,
+                            )
+                    }
+                }
+                _state.value = state.value.copy(
+                    extendedPublicHolidays = state.value.extendedPublicHolidays.mapIndexed { index, extendedPublicHoliday ->
+                        if (index == publicHolidayIndex) {
+                            extendedPublicHoliday.copy(
+                                recommendedDays = extendedPublicHoliday.recommendedDays.mapIndexed { i, recommendation ->
+                                    if (i == calendarIndex) {
+                                        recommendation.copy(isSelected = false)
+                                    } else {
+                                        recommendation
+                                    }
+                                }
+                            )
+                        } else {
+                            extendedPublicHoliday
+                        }
+                    }
+                )
+            }
+        }
     }
 
     // TODO investigate how to improve performance showing multiple calendars. WHERE IS THE POOP, ROBIN?
@@ -266,6 +334,9 @@ class HolidayListViewModel(
             null
         }
     }
+
+    private fun List<List<LocalDate>>.toRecommendationList(): List<Recommendation> =
+        this.map { Recommendation(it, false) }
 
     private enum class HolidayFinderDirection {
         LEFT, RIGHT

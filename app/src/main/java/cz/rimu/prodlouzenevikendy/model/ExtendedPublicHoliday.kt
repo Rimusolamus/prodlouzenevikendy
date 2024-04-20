@@ -11,8 +11,14 @@ data class ExtendedPublicHoliday(
     val localName: String,
     val name: String,
     val date: Date?,
-    val recommendedDays: List<List<LocalDate>>,
+    val recommendedDays: List<Recommendation>,
     val isVisible: Boolean
+)
+
+@Immutable
+data class Recommendation(
+    val days: List<LocalDate>,
+    val isSelected: Boolean
 )
 
 // from Date to YearMonth

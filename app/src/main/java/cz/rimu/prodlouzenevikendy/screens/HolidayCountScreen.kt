@@ -1,6 +1,7 @@
 package cz.rimu.prodlouzenevikendy.screens
 
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.runtime.*
@@ -22,14 +23,17 @@ import org.koin.androidx.compose.getViewModel
 @Composable
 fun HolidayCountScreen(goToHolidayList: () -> Unit) {
     val viewModel = getViewModel<HolidayCountViewModel>()
+    val state by viewModel.state.collectAsState()
     HolidayCountScreenImpl(
+        state.holidayCount,
         goToHolidayList,
-        viewModel::onHolidayCountChanged
+        viewModel::onHolidayCountChanged,
     )
 }
 
 @Composable
 private fun HolidayCountScreenImpl(
+    holidayCount: Int,
     goToHolidayList: () -> Unit,
     onHolidayCountChanged: (Int) -> Unit
 ) {
@@ -39,22 +43,41 @@ private fun HolidayCountScreenImpl(
                 title = { Text(text = "Prodloužené víkendy na rok!") }
             )
         },
-        action = {
-            Column {
-                ButtonPrimary(
+        actionLayout = {
+            if (holidayCount == 0) {
+                Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 32.dp),
-                    onClick = goToHolidayList
+                        .background(OrbitTheme.colors.surface.disabled)
                 ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(4.dp)
-                    ) {
-                        Text(text = "Jdeme na to")
+                    Column {
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text(
+                            text = "Zadejte počet dní dovolené",
+                            style = OrbitTheme.typography.title5,
+                            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
                     }
+
                 }
-                Spacer(modifier = Modifier.height(32.dp))
+            } else {
+                Column {
+                    ButtonPrimary(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 32.dp),
+                        onClick = goToHolidayList
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            Text(text = "Jdeme na to")
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(32.dp))
+                }
             }
         }
     ) { padding ->
@@ -72,9 +95,9 @@ private fun HolidayCountScreenImpl(
                 horizontalArrangement = Arrangement.spacedBy(4.dp)
             ) {
                 Text(text = "Mám narok na ")
-                var text by remember { mutableStateOf("") }
+                var text by remember { mutableStateOf("20") }
                 TextField(
-                    value = text,
+                    value = holidayCount.toString(),
                     onValueChange = { newValue ->
                         text = newValue.filter { it.isDigit() }.also {
                             onHolidayCountChanged(it.toIntOrNull() ?: 0)
@@ -96,7 +119,8 @@ fun DefaultPreview() {
     OrbitTheme {
         HolidayCountScreenImpl(
             onHolidayCountChanged = { },
-            goToHolidayList = { }
+            goToHolidayList = { },
+            holidayCount = 20
         )
     }
 }
