@@ -3,6 +3,7 @@ package cz.rimu.prodlouzenevikendy.presentation
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import cz.rimu.prodlouzenevikendy.domain.HolidayCountRepository
 import cz.rimu.prodlouzenevikendy.domain.PublicHolidaysRepository
 import cz.rimu.prodlouzenevikendy.model.ExtendedPublicHoliday
 import cz.rimu.prodlouzenevikendy.model.HolidayRecommendation
@@ -17,7 +18,8 @@ import java.time.LocalDate
 import java.util.*
 
 class HolidayListViewModel(
-    publicHolidaysRepository: PublicHolidaysRepository
+    publicHolidaysRepository: PublicHolidaysRepository,
+    holidayCountRepository: HolidayCountRepository
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(
@@ -30,7 +32,10 @@ class HolidayListViewModel(
     private val _publicHolidays = MutableStateFlow<List<PublicHoliday>>(emptyList())
 
     init {
-        _state.value = state.value.copy(isLoading = true)
+        _state.value = state.value.copy(
+            isLoading = true,
+            vacationDaysLeft = holidayCountRepository.holidayCount
+        )
 
         viewModelScope.launch(Dispatchers.IO) {
             val list = publicHolidaysRepository.getPublicHolidays()
@@ -83,6 +88,11 @@ class HolidayListViewModel(
         }
     }
 
+    fun onCalendarSelected(publicHolidayIndex: Int, calendarIndex: Int) {
+
+    }
+
+    // TODO investigate how to improve performance showing multiple calendars. WHERE IS THE POOP, ROBIN?
     fun toggleHolidayVisibility(index: Int) {
         _state.value =
             state.value.copy(extendedPublicHolidays = state.value.extendedPublicHolidays.mapIndexed { i, extendedPublicHoliday ->
@@ -133,7 +143,7 @@ class HolidayListViewModel(
                 )
 
                 // seems like rates are correct
-                if (holidayRecommendation.rate < 2) {
+                if (holidayRecommendation.rate < 2.1) {
                     return holidayRecommendationList.map { it.daysDates }
                 } else {
                     if (holidayRecommendationList.isEmpty()) {
@@ -263,6 +273,7 @@ class HolidayListViewModel(
 
     data class State(
         val isLoading: Boolean,
-        val extendedPublicHolidays: List<ExtendedPublicHoliday>
+        val extendedPublicHolidays: List<ExtendedPublicHoliday>,
+        val vacationDaysLeft: Int = 0
     )
 }
