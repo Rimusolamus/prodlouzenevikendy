@@ -40,7 +40,7 @@ class HolidayListViewModel(
 
         viewModelScope.launch {
             holidayCountRepository.holidayCount.collect {
-                _state.value = _state.value.copy(
+                _state.value = state.value.copy(
                     vacationDaysLeft = it
                 )
             }
@@ -82,7 +82,7 @@ class HolidayListViewModel(
                             HolidayFinderDirection.LEFT
                         )
                     _state.value =
-                        _state.value.copy(extendedPublicHolidays = _state.value.extendedPublicHolidays.mapIndexed { index, extendedPublicHoliday ->
+                        state.value.copy(extendedPublicHolidays = state.value.extendedPublicHolidays.mapIndexed { index, extendedPublicHoliday ->
                             if (index == holidayNumber) {
                                 extendedPublicHoliday.copy(
                                     recommendedDays = (recommendToRight + recommendToLeft).sortedBy { it.size }
@@ -100,63 +100,37 @@ class HolidayListViewModel(
 
     fun toggleCalendarSelection(publicHolidayIndex: Int, calendarIndex: Int, isAdding: Boolean) {
         val extendedPublicHoliday = state.value.extendedPublicHolidays[publicHolidayIndex]
-        val recommendedDays = extendedPublicHoliday.recommendedDays[calendarIndex]
-        if (isAdding) {
-            viewModelScope.launch(Dispatchers.IO) {
-                recommendedDays.days.forEach { day ->
-                    if (day.dayOfWeek != DayOfWeek.SATURDAY && day.dayOfWeek != DayOfWeek.SUNDAY && state.value.extendedPublicHolidays.find { it.date?.toLocalDate() == day } == null) {
-                        _state.value =
-                            state.value.copy(
-                                vacationDaysLeft = state.value.vacationDaysLeft - 1,
-                            )
+        val recommendedDay = extendedPublicHoliday.recommendedDays[calendarIndex]
+        calculateNewVacationDaysLeft(recommendedDay, calendarIndex, isAdding)
+    }
+
+    private fun calculateNewVacationDaysLeft(recommendation: Recommendation, calendarIndex: Int, isAdding: Boolean) {
+        viewModelScope.launch(Dispatchers.IO) {
+            recommendation.days.forEach { day ->
+                if (day.dayOfWeek != DayOfWeek.SATURDAY && day.dayOfWeek != DayOfWeek.SUNDAY && state.value.extendedPublicHolidays.find { it.date?.toLocalDate() == day } == null) {
+                    _state.value =
+                        state.value.copy(
+                            vacationDaysLeft = if (isAdding) state.value.vacationDaysLeft - 1 else state.value.vacationDaysLeft + 1,
+                        )
+                }
+            }
+            _state.value = state.value.copy(
+                extendedPublicHolidays = state.value.extendedPublicHolidays.mapIndexed { index, extendedPublicHoliday ->
+                    if (index == calendarIndex) {
+                        extendedPublicHoliday.copy(
+                            recommendedDays = extendedPublicHoliday.recommendedDays.mapIndexed { i, recommendation ->
+                                if (i == calendarIndex) {
+                                    recommendation.copy(isSelected = isAdding)
+                                } else {
+                                    recommendation
+                                }
+                            }
+                        )
+                    } else {
+                        extendedPublicHoliday
                     }
                 }
-                _state.value = state.value.copy(
-                    extendedPublicHolidays = state.value.extendedPublicHolidays.mapIndexed { index, extendedPublicHoliday ->
-                        if (index == publicHolidayIndex) {
-                            extendedPublicHoliday.copy(
-                                recommendedDays = extendedPublicHoliday.recommendedDays.mapIndexed { i, recommendation ->
-                                    if (i == calendarIndex) {
-                                        recommendation.copy(isSelected = true)
-                                    } else {
-                                        recommendation
-                                    }
-                                }
-                            )
-                        } else {
-                            extendedPublicHoliday
-                        }
-                    }
-                )
-            }
-        } else {
-            viewModelScope.launch(Dispatchers.IO) {
-                recommendedDays.days.forEach { day ->
-                    if (day.dayOfWeek != DayOfWeek.SATURDAY && day.dayOfWeek != DayOfWeek.SUNDAY && state.value.extendedPublicHolidays.find { it.date?.toLocalDate() == day } == null) {
-                        _state.value =
-                            state.value.copy(
-                                vacationDaysLeft = state.value.vacationDaysLeft + 1,
-                            )
-                    }
-                }
-                _state.value = state.value.copy(
-                    extendedPublicHolidays = state.value.extendedPublicHolidays.mapIndexed { index, extendedPublicHoliday ->
-                        if (index == publicHolidayIndex) {
-                            extendedPublicHoliday.copy(
-                                recommendedDays = extendedPublicHoliday.recommendedDays.mapIndexed { i, recommendation ->
-                                    if (i == calendarIndex) {
-                                        recommendation.copy(isSelected = false)
-                                    } else {
-                                        recommendation
-                                    }
-                                }
-                            )
-                        } else {
-                            extendedPublicHoliday
-                        }
-                    }
-                )
-            }
+            )
         }
     }
 
@@ -258,6 +232,7 @@ class HolidayListViewModel(
     // 0 - working day
     // 1 - weekends
     // 2 - public holidays
+    // 3 - processed working days
     private fun makeListOfWorkingDaysOfTheYear(publicHolidays: List<PublicHoliday>): List<Int> {
         val wholeYear = MutableList(getNumberOfDaysInCurrentYear()) { 0 }
         getWeekendDaysIndexes().map { wholeYear[it - 1] = 1 }
