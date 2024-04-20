@@ -146,11 +146,19 @@ private fun HolidayListScreenImpl(
                                         ?: YearMonth.now()
                                 ),
                                 dayContent = { day ->
-                                    if (localDates.contains(day.date) || publicHolidays[index].date?.toLocalDate() == day.date) {
-                                        OneDayBox(
-                                            day.date.dayOfMonth.toString(),
-                                            isSelected = true
-                                        )
+                                    if (localDates.contains(day.date)) {
+                                        if (publicHolidays.find { it.date?.toLocalDate() == day.date } != null) {
+                                            OneDayBox(
+                                                day.date.dayOfMonth.toString(),
+                                                isSelected = true,
+                                                isHoliday = true
+                                            )
+                                        } else {
+                                            OneDayBox(
+                                                day.date.dayOfMonth.toString(),
+                                                isSelected = true
+                                            )
+                                        }
                                     } else {
                                         OneDayBox(
                                             day.date.dayOfMonth.toString(),
@@ -171,14 +179,18 @@ private fun HolidayListScreenImpl(
 }
 
 @Composable
-private fun OneDayBox(dayText: String, isSelected: Boolean) {
+private fun OneDayBox(
+    dayText: String,
+    isSelected: Boolean,
+    isHoliday: Boolean = false
+) {
     Card(
         modifier = Modifier
             .aspectRatio(1f)
             .clip(RoundedCornerShape(8.dp))
             .border(
-                1.dp,
-                if (isSelected) OrbitTheme.colors.primary.normal else Color.Transparent,
+                if (isHoliday) 3.dp else 1.dp,
+                getDaySelectionColor(isSelected, isHoliday),
                 RoundedCornerShape(8.dp)
             )
 
@@ -189,6 +201,13 @@ private fun OneDayBox(dayText: String, isSelected: Boolean) {
 
 private fun LocalDate.toShortString(): String {
     return "${this.dayOfMonth} ${this.month}".lowercase(Locale.getDefault())
+}
+
+@Composable
+private fun getDaySelectionColor(isSelected: Boolean, isHoliday: Boolean): Color {
+    return if (isHoliday && isSelected) OrbitTheme.colors.primary.strong
+    else if (isSelected) OrbitTheme.colors.primary.normal
+    else Color.Transparent
 }
 
 @Preview

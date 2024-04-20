@@ -1,5 +1,6 @@
 package cz.rimu.prodlouzenevikendy.presentation
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import cz.rimu.prodlouzenevikendy.domain.PublicHolidaysRepository
@@ -43,7 +44,8 @@ class HolidayListViewModel(
                     recommendedDays = listOf(),
                     isVisible = false
                 )
-                _state.value = state.value.copy(extendedPublicHolidays = state.value.extendedPublicHolidays + extendedPublicHoliday)
+                _state.value =
+                    state.value.copy(extendedPublicHolidays = state.value.extendedPublicHolidays + extendedPublicHoliday)
             }
 
             val wholeYear = makeListOfWorkingDaysOfTheYear(_publicHolidays.value)
@@ -65,15 +67,16 @@ class HolidayListViewModel(
                             holidaysIndexes,
                             HolidayFinderDirection.LEFT
                         )
-                    _state.value = _state.value.copy(extendedPublicHolidays = _state.value.extendedPublicHolidays.mapIndexed { index, extendedPublicHoliday ->
-                        if (index == holidayNumber) {
-                            extendedPublicHoliday.copy(
-                                recommendedDays = (recommendToRight + recommendToLeft).sortedBy { it.size }
-                            )
-                        } else {
-                            extendedPublicHoliday
-                        }
-                    })
+                    _state.value =
+                        _state.value.copy(extendedPublicHolidays = _state.value.extendedPublicHolidays.mapIndexed { index, extendedPublicHoliday ->
+                            if (index == holidayNumber) {
+                                extendedPublicHoliday.copy(
+                                    recommendedDays = (recommendToRight + recommendToLeft).sortedBy { it.size }
+                                )
+                            } else {
+                                extendedPublicHoliday
+                            }
+                        })
                 }
             }
             _state.value = state.value.copy(isLoading = false)
@@ -81,13 +84,14 @@ class HolidayListViewModel(
     }
 
     fun toggleHolidayVisibility(index: Int) {
-        _state.value = state.value.copy(extendedPublicHolidays = state.value.extendedPublicHolidays.mapIndexed { i, extendedPublicHoliday ->
-            if (i == index) {
-                extendedPublicHoliday.copy(isVisible = !extendedPublicHoliday.isVisible)
-            } else {
-                extendedPublicHoliday
-            }
-        })
+        _state.value =
+            state.value.copy(extendedPublicHolidays = state.value.extendedPublicHolidays.mapIndexed { i, extendedPublicHoliday ->
+                if (i == index) {
+                    extendedPublicHoliday.copy(isVisible = !extendedPublicHoliday.isVisible)
+                } else {
+                    extendedPublicHoliday
+                }
+            })
     }
 
     private fun getRecommended(
@@ -114,29 +118,31 @@ class HolidayListViewModel(
                 numberOfDays++
                 wholeYearMutable[index] = 3
             }
-            val updatedHolidayIndexes = getHolidaysIndexesCloseToDate(wholeYearMutable, index)
+            if (numberOfDays >= 1) {
+                val updatedHolidayIndexes = getHolidaysIndexesCloseToDate(wholeYearMutable, index)
 
-            index = if (direction == HolidayFinderDirection.RIGHT) {
-                updatedHolidayIndexes.last()
-            } else {
-                updatedHolidayIndexes.first()
-            }
-
-            holidayRecommendation = holidayRecommendation.copy(
-                rate = updatedHolidayIndexes.size.toFloat() / numberOfDays,
-                days = updatedHolidayIndexes,
-                daysDates = updatedHolidayIndexes.map { getDateByDayOfYear(it).toLocalDate() }
-            )
-
-            if (holidayRecommendation.rate < 2) {
-                return holidayRecommendationList.map { it.daysDates }
-            } else {
-                if (holidayRecommendationList.isEmpty()) {
-                    holidayRecommendationList.add(holidayRecommendation)
+                index = if (direction == HolidayFinderDirection.RIGHT) {
+                    updatedHolidayIndexes.last()
                 } else {
-                    if (holidayRecommendationList.last().rate != holidayRecommendation.rate
-                    ) {
+                    updatedHolidayIndexes.first()
+                }
+                holidayRecommendation = holidayRecommendation.copy(
+                    rate = updatedHolidayIndexes.size.toFloat() / numberOfDays,
+                    days = updatedHolidayIndexes,
+                    daysDates = updatedHolidayIndexes.map { getDateByDayOfYear(it).toLocalDate() }
+                )
+
+                // seems like rates are correct
+                if (holidayRecommendation.rate < 2) {
+                    return holidayRecommendationList.map { it.daysDates }
+                } else {
+                    if (holidayRecommendationList.isEmpty()) {
                         holidayRecommendationList.add(holidayRecommendation)
+                    } else {
+                        if (holidayRecommendationList.last().rate != holidayRecommendation.rate
+                        ) {
+                            holidayRecommendationList.add(holidayRecommendation)
+                        }
                     }
                 }
             }
@@ -246,7 +252,7 @@ class HolidayListViewModel(
             formatter.parse(dateString)
         } catch (e: Exception) {
             // Handle any exceptions that occur during parsing
-            println("Failed to parse date string: $dateString")
+            Log.e(this.toString(), "Failed to parse date string: $dateString")
             null
         }
     }

@@ -1,10 +1,12 @@
 package cz.rimu.prodlouzenevikendy.model
 
+import androidx.compose.runtime.Immutable
 import java.time.LocalDate
 import java.time.YearMonth
 import java.util.Calendar
 import java.util.Date
 
+@Immutable
 data class ExtendedPublicHoliday(
     val localName: String,
     val name: String,
@@ -30,4 +32,3 @@ fun Date.toLocalDate(): LocalDate {
         calendar.get(Calendar.DAY_OF_MONTH)
     )
 }
-
