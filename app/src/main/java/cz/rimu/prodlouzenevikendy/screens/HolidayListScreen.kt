@@ -9,7 +9,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.IconToggleButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -40,7 +39,7 @@ import kiwi.orbit.compose.ui.controls.Icon
 import kiwi.orbit.compose.ui.controls.Scaffold
 import kiwi.orbit.compose.ui.controls.Text
 import kiwi.orbit.compose.ui.controls.TopAppBar
-import org.koin.androidx.compose.getViewModel
+import org.koin.androidx.compose.koinViewModel
 import java.time.LocalDate
 import java.time.YearMonth
 import java.util.Date
@@ -48,7 +47,7 @@ import java.util.Locale
 
 @Composable
 fun HolidayListScreen(goBack: () -> Unit) {
-    val viewModel = getViewModel<HolidayListViewModel>()
+    val viewModel = koinViewModel<HolidayListViewModel>()
     val state = viewModel.state.collectAsState()
     HolidayListScreenImpl(
         publicHolidays = state.value.extendedPublicHolidays,
@@ -124,34 +123,35 @@ private fun HolidayListScreenImpl(
                             toggleHolidayVisibility = toggleHolidayVisibility
                         )
                         Spacer(modifier = Modifier.height(8.dp))
-                        if (publicHoliday.isVisible) {
-                            publicHoliday.recommendedDays.fastForEachIndexed { calendarIndex, localDates ->
-                                StaticCalendar(
-                                    calendarState = rememberCalendarState(
-                                        initialMonth = publicHoliday.date?.toYearMonth()
-                                            ?: YearMonth.now()
-                                    ),
-                                    monthHeader = { month ->
-                                        MonthHeader(
-                                            month = month,
-                                            toggleCalendarSelection = toggleCalendarSelection,
-                                            index = index,
-                                            calendarIndex = calendarIndex,
-                                            isSelected = localDates.isSelected
-                                        )
-                                    },
-                                    dayContent = { day ->
-                                        DayContent(
-                                            day = day,
-                                            recommendation = localDates,
-                                            publicHolidays = publicHolidays
-                                        )
-                                    },
-                                    modifier = Modifier
-                                        .padding(horizontal = 16.dp)
-                                )
-                                Spacer(modifier = Modifier.height(16.dp))
-                            }
+                    }
+
+                    if (publicHoliday.isVisible) {
+                        publicHoliday.recommendedDays.fastForEachIndexed { calendarIndex, localDates ->
+                            StaticCalendar(
+                                calendarState = rememberCalendarState(
+                                    initialMonth = publicHoliday.date?.toYearMonth()
+                                        ?: YearMonth.now()
+                                ),
+                                monthHeader = { month ->
+                                    MonthHeader(
+                                        month = month,
+                                        toggleCalendarSelection = toggleCalendarSelection,
+                                        index = index,
+                                        calendarIndex = calendarIndex,
+                                        isSelected = localDates.isSelected
+                                    )
+                                },
+                                dayContent = { day ->
+                                    DayContent(
+                                        day = day,
+                                        recommendation = localDates,
+                                        publicHolidays = publicHolidays
+                                    )
+                                },
+                                modifier = Modifier
+                                    .padding(horizontal = 16.dp)
+                            )
+                            Spacer(modifier = Modifier.height(16.dp))
                         }
                     }
                 }
