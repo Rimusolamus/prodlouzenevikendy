@@ -17,13 +17,13 @@ import kiwi.orbit.compose.ui.controls.Scaffold
 import kiwi.orbit.compose.ui.controls.Text
 import kiwi.orbit.compose.ui.controls.TextField
 import kiwi.orbit.compose.ui.controls.TopAppBar
-import org.koin.androidx.compose.getViewModel
+import org.koin.androidx.compose.koinViewModel
 
 
 @Composable
 fun HolidayCountScreen(goToHolidayList: () -> Unit) {
-    val viewModel = getViewModel<HolidayCountViewModel>()
-    val state by viewModel.state.collectAsState()
+    val viewModel = koinViewModel<HolidayCountViewModel>()
+    val state by viewModel.states.collectAsState()
     HolidayCountScreenImpl(
         state.holidayCount,
         goToHolidayList,
@@ -103,7 +103,6 @@ private fun HolidayCountScreenImpl(
                             onHolidayCountChanged(it.toIntOrNull() ?: 0)
                         }
                     },
-                    placeholder = { Text(text = "20") },
                     modifier = Modifier.width(64.dp),
                     keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Number),
                 )

@@ -1,26 +1,18 @@
 package cz.rimu.prodlouzenevikendy.presentation
 
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import cz.rimu.prodlouzenevikendy.domain.HolidayCountRepository
-import kotlinx.coroutines.flow.MutableStateFlow
+import cz.rimu.tools.presentation.AbstractViewModel
 import kotlinx.coroutines.launch
 
 class HolidayCountViewModel(
     private val holidayCountRepository: HolidayCountRepository
-) : ViewModel() {
-
-    private val _state = MutableStateFlow(
-        State(
-            holidayCount = 0
-        )
-    )
-    val state = _state
+) : AbstractViewModel<HolidayCountViewModel.State>(State()) {
 
     init {
         viewModelScope.launch {
             holidayCountRepository.holidayCount.collect {
-                _state.value = _state.value.copy(
+                state = state.copy(
                     holidayCount = it
                 )
             }
@@ -32,6 +24,6 @@ class HolidayCountViewModel(
     }
 
     data class State(
-        val holidayCount: Int
-    )
+        val holidayCount: Int = 0
+    ) : AbstractViewModel.State
 }

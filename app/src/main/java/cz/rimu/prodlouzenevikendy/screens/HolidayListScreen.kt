@@ -49,7 +49,7 @@ import java.util.Locale
 @Composable
 fun HolidayListScreen(goBack: () -> Unit) {
     val viewModel = koinViewModel<HolidayListViewModel>()
-    val state = viewModel.state.collectAsState()
+    val state = viewModel.states.collectAsState()
     HolidayListScreenImpl(
         publicHolidays = state.value.extendedPublicHolidays,
         isLoading = state.value.isLoading,
