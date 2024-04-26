@@ -1,12 +1,12 @@
 package cz.rimu.prodlouzenevikendy.presentation
 
 import androidx.lifecycle.viewModelScope
-import cz.rimu.prodlouzenevikendy.domain.HolidayCountRepository
+import cz.rimu.prodlouzenevikendy.domain.LocalHolidayCountRepository
 import cz.rimu.tools.presentation.AbstractViewModel
 import kotlinx.coroutines.launch
 
 class HolidayCountViewModel(
-    private val holidayCountRepository: HolidayCountRepository
+    private val holidayCountRepository: LocalHolidayCountRepository
 ) : AbstractViewModel<HolidayCountViewModel.State>(State()) {
 
     init {

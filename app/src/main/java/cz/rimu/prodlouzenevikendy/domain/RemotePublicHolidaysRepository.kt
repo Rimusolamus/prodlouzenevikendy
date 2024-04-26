@@ -2,6 +2,6 @@ package cz.rimu.prodlouzenevikendy.domain
 
 import cz.rimu.prodlouzenevikendy.model.PublicHoliday
 
-interface PublicHolidaysRepository {
+interface RemotePublicHolidaysRepository {
     suspend fun getPublicHolidays(): List<PublicHoliday>
 }

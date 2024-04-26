@@ -47,7 +47,10 @@ import java.util.Date
 import java.util.Locale
 
 @Composable
-fun HolidayListScreen(goBack: () -> Unit) {
+fun HolidayListScreen(
+    goBack: () -> Unit,
+    openSelectedHolidays: () -> Unit
+) {
     val viewModel = koinViewModel<HolidayListViewModel>()
     val state = viewModel.states.collectAsState()
     HolidayListScreenImpl(
@@ -55,6 +58,7 @@ fun HolidayListScreen(goBack: () -> Unit) {
         isLoading = state.value.isLoading,
         vacationDaysLeft = state.value.vacationDaysLeft,
         goBack = goBack,
+        openSelectedHolidays = openSelectedHolidays,
         toggleHolidayVisibility = viewModel::toggleHolidayVisibility,
         toggleCalendarSelection = viewModel::toggleCalendarSelection
     )
@@ -65,6 +69,7 @@ private fun HolidayListScreenImpl(
     publicHolidays: List<ExtendedPublicHoliday> = emptyList(),
     isLoading: Boolean = false,
     goBack: () -> Unit = {},
+    openSelectedHolidays: () -> Unit = {},
     toggleHolidayVisibility: (Int) -> Unit = {},
     toggleCalendarSelection: (Int, Int, Boolean) -> Unit = { _, _, _ -> },
     vacationDaysLeft: Int = 0
@@ -85,9 +90,9 @@ private fun HolidayListScreenImpl(
                     modifier = Modifier.align(Alignment.CenterVertically)
                 )
                 Spacer(modifier = Modifier.weight(1f))
-                ButtonPrimary(onClick = {}) {
+                ButtonPrimary(onClick = { openSelectedHolidays() }, content = {
                     Text(text = "Podivat se na vysledky")
-                }
+                })
             }
         }
     ) { paddingValues ->
@@ -329,7 +334,7 @@ private fun LocalDate.toShortString(): String {
 }
 
 @Composable
-private fun getDaySelectionColor(isSelected: Boolean, isHoliday: Boolean): Color {
+fun getDaySelectionColor(isSelected: Boolean, isHoliday: Boolean): Color {
     return if (isHoliday && isSelected) OrbitTheme.colors.primary.strong
     else if (isSelected) OrbitTheme.colors.primary.normal
     else Color.Transparent

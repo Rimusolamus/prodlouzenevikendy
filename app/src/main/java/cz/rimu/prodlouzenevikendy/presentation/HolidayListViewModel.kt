@@ -2,8 +2,9 @@ package cz.rimu.prodlouzenevikendy.presentation
 
 import android.util.Log
 import androidx.lifecycle.viewModelScope
-import cz.rimu.prodlouzenevikendy.domain.HolidayCountRepository
-import cz.rimu.prodlouzenevikendy.domain.PublicHolidaysRepository
+import cz.rimu.prodlouzenevikendy.domain.LocalHolidayCountRepository
+import cz.rimu.prodlouzenevikendy.domain.LocalSelectedRecommendations
+import cz.rimu.prodlouzenevikendy.domain.RemotePublicHolidaysRepository
 import cz.rimu.prodlouzenevikendy.model.ExtendedPublicHoliday
 import cz.rimu.prodlouzenevikendy.model.HolidayRecommendation
 import cz.rimu.prodlouzenevikendy.model.PublicHoliday
@@ -19,8 +20,9 @@ import java.time.LocalDate
 import java.util.*
 
 class HolidayListViewModel(
-    private val publicHolidaysRepository: PublicHolidaysRepository,
-    holidayCountRepository: HolidayCountRepository
+    private val publicHolidaysRepository: RemotePublicHolidaysRepository,
+    private val selectedRecommendations: LocalSelectedRecommendations,
+    holidayCountRepository: LocalHolidayCountRepository
 ) : AbstractViewModel<HolidayListViewModel.State>(State()) {
 
     private val _publicHolidays = MutableStateFlow<List<PublicHoliday>>(emptyList())
@@ -65,7 +67,8 @@ class HolidayListViewModel(
             isAdding = isAdding
         )
         selectCalendar(
-            calendarIndex = publicHolidayIndex,
+            publicHolidayIndex = publicHolidayIndex,
+            calendarIndex = calendarIndex,
             isAdding = isAdding
         )
     }
@@ -138,15 +141,25 @@ class HolidayListViewModel(
     }
 
     private fun selectCalendar(
+        publicHolidayIndex: Int,
         calendarIndex: Int,
         isAdding: Boolean
     ) {
         state = state.copy(
             extendedPublicHolidays = state.extendedPublicHolidays.mapIndexed { index, extendedPublicHoliday ->
-                if (index == calendarIndex) {
+                if (index == publicHolidayIndex) {
                     extendedPublicHoliday.copy(
                         recommendedDays = extendedPublicHoliday.recommendedDays.mapIndexed { i, recommendation ->
                             if (i == calendarIndex) {
+                                if (isAdding) {
+                                    viewModelScope.launch(Dispatchers.IO) {
+                                        selectedRecommendations.addSelectedRecommendation(recommendation)
+                                    }
+                                } else {
+                                    viewModelScope.launch(Dispatchers.IO) {
+                                        selectedRecommendations.removeSelectedRecommendation(recommendation)
+                                    }
+                                }
                                 recommendation.copy(isSelected = isAdding)
                             } else {
                                 recommendation
