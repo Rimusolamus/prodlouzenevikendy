@@ -78,9 +78,11 @@ fun SelectedHolidaysScreenImpl(
                 item {
                     Spacer(modifier = Modifier.height(16.dp))
                     Text(
-                        text = "Selected holidays",
+                        text = if (state.selectedHolidays?.isEmpty() == true) "Nothing is selected" else "Selected holidays",
                         style = OrbitTheme.typography.title4,
-                        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp),
                     )
                     Spacer(modifier = Modifier.height(16.dp))
                 }
