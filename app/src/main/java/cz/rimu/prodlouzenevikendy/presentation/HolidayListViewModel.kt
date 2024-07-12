@@ -30,10 +30,6 @@ class HolidayListViewModel(
     private val _publicHolidays = MutableStateFlow<List<PublicHoliday>>(emptyList())
 
     init {
-        state = state.copy(
-            isLoading = true
-        )
-
         viewModelScope.launch(Dispatchers.IO) {
             makeHolidayList()
         }
