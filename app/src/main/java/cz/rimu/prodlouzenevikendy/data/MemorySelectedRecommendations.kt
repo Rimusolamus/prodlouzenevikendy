@@ -1,14 +1,14 @@
 package cz.rimu.prodlouzenevikendy.data
 
-import cz.rimu.prodlouzenevikendy.domain.LocalSelectedRecommendations
+import cz.rimu.prodlouzenevikendy.domain.LocalSelectedRecommendationsRepository
 import cz.rimu.prodlouzenevikendy.model.Recommendation
 import kotlinx.coroutines.flow.MutableStateFlow
 
-class MemorySelectedRecommendations : LocalSelectedRecommendations {
-    private val selectedRecommendations = MutableStateFlow<List<Recommendation>>(emptyList())
+class MemorySelectedRecommendationsRepository : LocalSelectedRecommendationsRepository {
+    private val selectedRecommendations = MutableStateFlow<Set<Recommendation>>(emptySet())
 
-    override suspend fun getSelectedRecommendations(): List<Recommendation> {
-        return selectedRecommendations.value
+    override suspend fun getSelectedRecommendations(): MutableStateFlow<Set<Recommendation>> {
+        return selectedRecommendations
     }
 
     override suspend fun addSelectedRecommendation(recommendation: Recommendation) {
@@ -16,6 +16,6 @@ class MemorySelectedRecommendations : LocalSelectedRecommendations {
     }
 
     override suspend fun removeSelectedRecommendation(recommendation: Recommendation) {
-        selectedRecommendations.value -= recommendation
+        selectedRecommendations.value -= recommendation.copy(isSelected = false)
     }
 }

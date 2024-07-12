@@ -3,7 +3,7 @@ package cz.rimu.prodlouzenevikendy.presentation
 import android.util.Log
 import androidx.lifecycle.viewModelScope
 import cz.rimu.prodlouzenevikendy.domain.LocalHolidayCountRepository
-import cz.rimu.prodlouzenevikendy.domain.LocalSelectedRecommendations
+import cz.rimu.prodlouzenevikendy.domain.LocalSelectedRecommendationsRepository
 import cz.rimu.prodlouzenevikendy.domain.RemotePublicHolidaysRepository
 import cz.rimu.prodlouzenevikendy.model.ExtendedPublicHoliday
 import cz.rimu.prodlouzenevikendy.model.HolidayRecommendation
@@ -13,6 +13,8 @@ import cz.rimu.prodlouzenevikendy.model.toLocalDate
 import cz.rimu.tools.presentation.AbstractViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.time.DayOfWeek
@@ -21,7 +23,7 @@ import java.util.*
 
 class HolidayListViewModel(
     private val publicHolidaysRepository: RemotePublicHolidaysRepository,
-    private val selectedRecommendations: LocalSelectedRecommendations,
+    private val selectedRecommendationsRepository: LocalSelectedRecommendationsRepository,
     holidayCountRepository: LocalHolidayCountRepository
 ) : AbstractViewModel<HolidayListViewModel.State>(State()) {
 
@@ -32,16 +34,23 @@ class HolidayListViewModel(
             isLoading = true
         )
 
-        viewModelScope.launch {
-            holidayCountRepository.holidayCount.collect {
-                state = state.copy(
-                    vacationDaysLeft = it
-                )
-            }
-        }
-
         viewModelScope.launch(Dispatchers.IO) {
             makeHolidayList()
+        }
+
+        viewModelScope.launch {
+            combine(
+                selectedRecommendationsRepository.getSelectedRecommendations(),
+                holidayCountRepository.holidayCount
+            ) { selectedRecommendations, vacationDaysLeft ->
+                state = state.copy(
+                    vacationDaysLeft = vacationDaysLeft - selectedRecommendations.sumOf {
+                        calculateNumberOfUsedVocationDaysInRecommendation(
+                            it
+                        )
+                    }
+                )
+            }.launchIn(viewModelScope)
         }
     }
 
@@ -60,16 +69,35 @@ class HolidayListViewModel(
     }
 
     fun toggleCalendarSelection(publicHolidayIndex: Int, calendarIndex: Int, isAdding: Boolean) {
-        val extendedPublicHoliday = state.extendedPublicHolidays[publicHolidayIndex]
-        val recommendedDay = extendedPublicHoliday.recommendedDays[calendarIndex]
-        calculateNewVacationDaysLeft(
-            recommendation = recommendedDay,
-            isAdding = isAdding
-        )
-        selectCalendar(
-            publicHolidayIndex = publicHolidayIndex,
-            calendarIndex = calendarIndex,
-            isAdding = isAdding
+        state = state.copy(
+            extendedPublicHolidays = state.extendedPublicHolidays.mapIndexed { index, extendedPublicHoliday ->
+                if (index == publicHolidayIndex) {
+                    extendedPublicHoliday.copy(
+                        recommendedDays = extendedPublicHoliday.recommendedDays.mapIndexed { i, recommendation ->
+                            if (i == calendarIndex) {
+                                if (isAdding) {
+                                    viewModelScope.launch(Dispatchers.IO) {
+                                        selectedRecommendationsRepository.addSelectedRecommendation(
+                                            recommendation
+                                        )
+                                    }
+                                } else {
+                                    viewModelScope.launch(Dispatchers.IO) {
+                                        selectedRecommendationsRepository.removeSelectedRecommendation(
+                                            recommendation
+                                        )
+                                    }
+                                }
+                                recommendation.copy(isSelected = isAdding, isVisible = true)
+                            } else {
+                                recommendation.copy(isSelected = false, isVisible = !isAdding)
+                            }
+                        }
+                    )
+                } else {
+                    extendedPublicHoliday
+                }
+            }
         )
     }
 
@@ -124,57 +152,16 @@ class HolidayListViewModel(
         state = state.copy(isLoading = false)
     }
 
-    private fun calculateNewVacationDaysLeft(
-        recommendation: Recommendation,
-        isAdding: Boolean
-    ) {
-        viewModelScope.launch(Dispatchers.IO) {
-            recommendation.days.forEach { day ->
-                if (day.dayOfWeek != DayOfWeek.SATURDAY && day.dayOfWeek != DayOfWeek.SUNDAY && state.extendedPublicHolidays.find { it.date?.toLocalDate() == day } == null) {
-                    state =
-                        state.copy(
-                            vacationDaysLeft = if (isAdding) state.vacationDaysLeft - 1 else state.vacationDaysLeft + 1,
-                        )
-                }
+    private fun calculateNumberOfUsedVocationDaysInRecommendation(
+        recommendation: Recommendation
+    ): Int {
+        var numberOfUsedVacationDays = 0
+        recommendation.days.forEach { day ->
+            if (day.dayOfWeek != DayOfWeek.SATURDAY && day.dayOfWeek != DayOfWeek.SUNDAY && state.extendedPublicHolidays.find { it.date?.toLocalDate() == day } == null) {
+                numberOfUsedVacationDays++
             }
         }
-    }
-
-    private fun selectCalendar(
-        publicHolidayIndex: Int,
-        calendarIndex: Int,
-        isAdding: Boolean
-    ) {
-        state = state.copy(
-            extendedPublicHolidays = state.extendedPublicHolidays.mapIndexed { index, extendedPublicHoliday ->
-                if (index == publicHolidayIndex) {
-                    extendedPublicHoliday.copy(
-                        recommendedDays = extendedPublicHoliday.recommendedDays.mapIndexed { i, recommendation ->
-                            if (i == calendarIndex) {
-                                if (isAdding) {
-                                    viewModelScope.launch(Dispatchers.IO) {
-                                        selectedRecommendations.addSelectedRecommendation(
-                                            recommendation
-                                        )
-                                    }
-                                } else {
-                                    viewModelScope.launch(Dispatchers.IO) {
-                                        selectedRecommendations.removeSelectedRecommendation(
-                                            recommendation
-                                        )
-                                    }
-                                }
-                                recommendation.copy(isSelected = isAdding, isVisible = true)
-                            } else {
-                                recommendation.copy(isSelected = false, isVisible = !isAdding)
-                            }
-                        }
-                    )
-                } else {
-                    extendedPublicHoliday
-                }
-            }
-        )
+        return numberOfUsedVacationDays
     }
 
     private fun getRecommended(

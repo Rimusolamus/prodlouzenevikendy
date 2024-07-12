@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -86,12 +87,11 @@ fun SelectedHolidaysScreenImpl(
                     )
                     Spacer(modifier = Modifier.height(16.dp))
                 }
-                state.selectedHolidays?.size?.let {
-                    items(it) { index ->
-                        val recommendation = state.selectedHolidays[index]
+                state.selectedHolidays?.let {
+                    itemsIndexed(it) { _, item ->
                         StaticCalendar(
                             calendarState = rememberCalendarState(
-                                initialMonth = YearMonth.from(recommendation.days.first())
+                                initialMonth = YearMonth.from(item.days.first())
                                     ?: YearMonth.now()
                             ),
                             monthHeader = { month ->
@@ -102,7 +102,7 @@ fun SelectedHolidaysScreenImpl(
                             dayContent = { day ->
                                 DayContent(
                                     day = day,
-                                    recommendation = recommendation
+                                    recommendation = item
                                 )
                             },
                             modifier = Modifier

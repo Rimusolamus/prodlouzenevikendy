@@ -4,10 +4,10 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import cz.rimu.prodlouzenevikendy.data.MemoryLocalHolidayCountRepository
-import cz.rimu.prodlouzenevikendy.data.MemorySelectedRecommendations
+import cz.rimu.prodlouzenevikendy.data.MemorySelectedRecommendationsRepository
 import cz.rimu.prodlouzenevikendy.data.RetrofitPublicHolidayRepository
 import cz.rimu.prodlouzenevikendy.domain.LocalHolidayCountRepository
-import cz.rimu.prodlouzenevikendy.domain.LocalSelectedRecommendations
+import cz.rimu.prodlouzenevikendy.domain.LocalSelectedRecommendationsRepository
 import cz.rimu.prodlouzenevikendy.domain.RemotePublicHolidaysRepository
 import cz.rimu.prodlouzenevikendy.model.Api
 import cz.rimu.prodlouzenevikendy.presentation.HolidayListViewModel
@@ -43,5 +43,5 @@ val appModule = module {
 
     factoryOf(::RetrofitPublicHolidayRepository) bind RemotePublicHolidaysRepository::class
     singleOf(::MemoryLocalHolidayCountRepository) bind LocalHolidayCountRepository::class
-    singleOf(::MemorySelectedRecommendations) bind LocalSelectedRecommendations::class
+    singleOf(::MemorySelectedRecommendationsRepository) bind LocalSelectedRecommendationsRepository::class
 }
