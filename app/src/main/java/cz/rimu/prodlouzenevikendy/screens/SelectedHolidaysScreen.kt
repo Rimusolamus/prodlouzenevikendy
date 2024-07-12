@@ -59,28 +59,6 @@ fun SelectedHolidaysScreenImpl(
                 onNavigateUp = onBack
             )
         },
-        actionLayout = {
-            Column {
-                ButtonPrimary(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 32.dp),
-                    onClick = {
-                        state.selectedHolidays?.let {
-                            onOpenCalendar(it.flatMap { it.days })
-                        }
-                    }
-                ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(4.dp)
-                    ) {
-                        Text(text = "Ulozit do Google calendaru")
-                    }
-                }
-                Spacer(modifier = Modifier.height(32.dp))
-            }
-        },
         content = { paddingValues ->
             LazyColumn(modifier = Modifier.padding(paddingValues)) {
                 item {
@@ -115,6 +93,22 @@ fun SelectedHolidaysScreenImpl(
                             modifier = Modifier
                                 .padding(horizontal = 16.dp)
                         )
+                        Spacer(modifier = Modifier.height(16.dp))
+                        ButtonPrimary (
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 32.dp),
+                            onClick = {
+                                onOpenCalendar(item.days)
+                            }
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(4.dp)
+                            ) {
+                                Text(text = "Ulozit do Google calendaru")
+                            }
+                        }
                         Spacer(modifier = Modifier.height(16.dp))
                     }
                 }

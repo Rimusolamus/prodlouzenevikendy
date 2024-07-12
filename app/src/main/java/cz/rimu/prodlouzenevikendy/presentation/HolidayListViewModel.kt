@@ -165,14 +165,16 @@ class HolidayListViewModel(
         holidayIndexes: List<Int>,
         direction: HolidayFinderDirection
     ): List<List<LocalDate>> {
+        var mutableDirection = direction
         var holidayRecommendation = HolidayRecommendation()
         val holidayRecommendationList = mutableListOf<HolidayRecommendation>()
         var index = holidayIndexes.last()
         var numberOfDays = 0
+        var directionChanged = 0
 
         val wholeYearMutable = wholeYear.toMutableList()
         while (true) {
-            if (direction == HolidayFinderDirection.RIGHT) {
+            if (mutableDirection == HolidayFinderDirection.RIGHT) {
                 index++
             } else {
                 if (index == 0) {
@@ -187,7 +189,7 @@ class HolidayListViewModel(
             if (numberOfDays >= 1) {
                 val updatedHolidayIndexes = getHolidaysIndexesCloseToDate(wholeYearMutable, index)
 
-                index = if (direction == HolidayFinderDirection.RIGHT) {
+                index = if (mutableDirection == HolidayFinderDirection.RIGHT) {
                     updatedHolidayIndexes.last()
                 } else {
                     updatedHolidayIndexes.first()
@@ -200,7 +202,16 @@ class HolidayListViewModel(
 
                 // seems like rates are correct
                 if (holidayRecommendation.rate < 2) {
-                    return holidayRecommendationList.map { it.daysDates }
+                    if (directionChanged == 0) {
+                        directionChanged++
+                        mutableDirection = if (mutableDirection == HolidayFinderDirection.RIGHT) {
+                            HolidayFinderDirection.LEFT
+                        } else {
+                            HolidayFinderDirection.RIGHT
+                        }
+                    } else {
+                        return holidayRecommendationList.map { it.daysDates }
+                    }
                 } else {
                     if (holidayRecommendationList.isEmpty()) {
                         holidayRecommendationList.add(holidayRecommendation)
