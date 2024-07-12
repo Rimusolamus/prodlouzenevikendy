@@ -32,22 +32,25 @@ import kiwi.orbit.compose.ui.controls.Scaffold
 import kiwi.orbit.compose.ui.controls.Text
 import kiwi.orbit.compose.ui.controls.TopAppBar
 import org.koin.androidx.compose.koinViewModel
+import java.time.LocalDate
 import java.time.YearMonth
 import java.util.Locale
 
 @Composable
 fun SelectedHolidaysScreen(
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    onOpenCalendar: (List<LocalDate>) -> Unit
 ) {
     val viewModel = koinViewModel<SelectedHolidaysViewModel>()
     val state = viewModel.states.collectAsState()
-    SelectedHolidaysScreenImpl(state = state.value, onBack = onBack)
+    SelectedHolidaysScreenImpl(state = state.value, onBack = onBack, onOpenCalendar = onOpenCalendar)
 }
 
 @Composable
 fun SelectedHolidaysScreenImpl(
     state: SelectedHolidaysViewModel.State,
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    onOpenCalendar: (List<LocalDate>) -> Unit
 ) {
     Scaffold(
         topBar = {
@@ -62,7 +65,11 @@ fun SelectedHolidaysScreenImpl(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 32.dp),
-                    onClick = {}
+                    onClick = {
+                        state.selectedHolidays?.let {
+                            onOpenCalendar(it.flatMap { it.days })
+                        }
+                    }
                 ) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
