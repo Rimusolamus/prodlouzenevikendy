@@ -132,7 +132,7 @@ private fun HolidayListScreenImpl(
                     itemsIndexed(
                         items = publicHoliday.recommendedDays
                     ) { calendarIndex, localDates ->
-                        if (publicHoliday.isVisible) {
+                        if (publicHoliday.isVisible && localDates.isVisible) {
                             StaticCalendar(
                                 calendarState = rememberCalendarState(
                                     initialMonth = publicHoliday.date?.toYearMonth()

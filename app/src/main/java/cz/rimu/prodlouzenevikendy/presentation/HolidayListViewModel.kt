@@ -153,16 +153,20 @@ class HolidayListViewModel(
                             if (i == calendarIndex) {
                                 if (isAdding) {
                                     viewModelScope.launch(Dispatchers.IO) {
-                                        selectedRecommendations.addSelectedRecommendation(recommendation)
+                                        selectedRecommendations.addSelectedRecommendation(
+                                            recommendation
+                                        )
                                     }
                                 } else {
                                     viewModelScope.launch(Dispatchers.IO) {
-                                        selectedRecommendations.removeSelectedRecommendation(recommendation)
+                                        selectedRecommendations.removeSelectedRecommendation(
+                                            recommendation
+                                        )
                                     }
                                 }
-                                recommendation.copy(isSelected = isAdding)
+                                recommendation.copy(isSelected = isAdding, isVisible = true)
                             } else {
-                                recommendation
+                                recommendation.copy(isSelected = false, isVisible = !isAdding)
                             }
                         }
                     )
@@ -212,7 +216,7 @@ class HolidayListViewModel(
                 )
 
                 // seems like rates are correct
-                if (holidayRecommendation.rate < 2.1) {
+                if (holidayRecommendation.rate < 2) {
                     return holidayRecommendationList.map { it.daysDates }
                 } else {
                     if (holidayRecommendationList.isEmpty()) {
@@ -338,7 +342,7 @@ class HolidayListViewModel(
     }
 
     private fun List<List<LocalDate>>.toRecommendationList(): List<Recommendation> =
-        this.map { Recommendation(it, false) }
+        this.map { Recommendation(it, isSelected = false, isVisible = true) }
 
     private enum class HolidayFinderDirection {
         LEFT, RIGHT
