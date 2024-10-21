@@ -64,7 +64,7 @@ fun SelectedHolidaysScreenImpl(
                 item {
                     Spacer(modifier = Modifier.height(16.dp))
                     Text(
-                        text = if (state.selectedHolidays?.isEmpty() == true) "Nothing is selected" else "Selected holidays",
+                        text = if (state.selectedHolidays?.isEmpty() == true) "Zatím tady nic není. Vraťte se zpátky a naplánujte si dovolenou." else "Vybrané dovolené:",
                         style = OrbitTheme.typography.title4,
                         modifier = Modifier
                             .fillMaxWidth()
