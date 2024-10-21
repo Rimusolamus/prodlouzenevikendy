@@ -38,6 +38,8 @@ import kiwi.orbit.compose.ui.controls.Card
 import kiwi.orbit.compose.ui.controls.CircularProgressIndicator
 import kiwi.orbit.compose.ui.controls.Icon
 import kiwi.orbit.compose.ui.controls.Scaffold
+import kiwi.orbit.compose.ui.controls.Tab
+import kiwi.orbit.compose.ui.controls.TabRow
 import kiwi.orbit.compose.ui.controls.Text
 import kiwi.orbit.compose.ui.controls.TopAppBar
 import org.koin.androidx.compose.koinViewModel
@@ -57,21 +59,29 @@ fun HolidayListScreen(
         publicHolidays = state.value.extendedPublicHolidays,
         isLoading = state.value.isLoading,
         vacationDaysLeft = state.value.vacationDaysLeft,
+        selectedTabIndex = state.value.selectedTabIndex,
+        topTenPublicHolidays = state.value.topTenPublicHolidays,
         goBack = goBack,
         openSelectedHolidays = openSelectedHolidays,
         toggleHolidayVisibility = viewModel::toggleHolidayVisibility,
-        toggleCalendarSelection = viewModel::toggleCalendarSelection
+        toggleCalendarSelection = viewModel::toggleCalendarSelection,
+        toggleTopRecommendation = viewModel::toggleTopRecommendation,
+        selectTab = viewModel::selectTab
     )
 }
 
 @Composable
 private fun HolidayListScreenImpl(
     publicHolidays: List<ExtendedPublicHoliday> = emptyList(),
+    topTenPublicHolidays: List<Recommendation> = emptyList(),
     isLoading: Boolean = false,
+    selectedTabIndex: Int = 0,
     goBack: () -> Unit = {},
     openSelectedHolidays: () -> Unit = {},
     toggleHolidayVisibility: (Int) -> Unit = {},
+    selectTab: (Int) -> Unit = {},
     toggleCalendarSelection: (Int, Int, Boolean) -> Unit = { _, _, _ -> },
+    toggleTopRecommendation: (Recommendation) -> Unit = {},
     vacationDaysLeft: Int = 0
 ) {
     Scaffold(
@@ -112,53 +122,100 @@ private fun HolidayListScreenImpl(
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp)
             ) {
+                item {
+                    TabRow(
+                        selectedTabIndex = selectedTabIndex
+                    ) {
+                        Tab(
+                            selected = selectedTabIndex == 0,
+                            onClick = { selectTab(0) }) { Text("Doporučujeme") }
+                        Tab(
+                            selected = selectedTabIndex == 0,
+                            onClick = { selectTab(1) }) { Text("Vše") }
+                    }
+                }
                 item { Spacer(modifier = Modifier.height(8.dp)) }
-                publicHolidays.fastForEachIndexed { index, publicHoliday ->
-                    item {
-                        if (publicHoliday.recommendedDays.isNotEmpty()) {
-                            HolidayRow(
-                                index = index,
-                                isVisible = publicHoliday.isVisible,
-                                name = publicHoliday.name,
-                                localName = publicHoliday.localName,
-                                numberOfDays = publicHoliday.recommendedDays.size,
-                                date = publicHoliday.date,
-                                toggleHolidayVisibility = toggleHolidayVisibility
-                            )
-                            Spacer(modifier = Modifier.height(8.dp))
+                if (selectedTabIndex == 1) {
+                    publicHolidays.fastForEachIndexed { index, publicHoliday ->
+                        item {
+                            if (publicHoliday.recommendedDays.isNotEmpty()) {
+                                HolidayRow(
+                                    index = index,
+                                    isVisible = publicHoliday.isVisible,
+                                    name = publicHoliday.name,
+                                    localName = publicHoliday.localName,
+                                    numberOfDays = publicHoliday.recommendedDays.size,
+                                    date = publicHoliday.date,
+                                    toggleHolidayVisibility = toggleHolidayVisibility
+                                )
+                                Spacer(modifier = Modifier.height(8.dp))
+                            }
+                        }
+
+                        itemsIndexed(
+                            items = publicHoliday.recommendedDays
+                        ) { calendarIndex, localDates ->
+                            if (publicHoliday.isVisible && localDates.isVisible) {
+                                StaticCalendar(
+                                    calendarState = rememberCalendarState(
+                                        initialMonth = publicHoliday.date?.toYearMonth()
+                                            ?: YearMonth.now()
+                                    ),
+                                    monthHeader = { month ->
+                                        MonthHeader(
+                                            month = month,
+                                            toggleCalendarSelection = toggleCalendarSelection,
+                                            index = index,
+                                            calendarIndex = calendarIndex,
+                                            isSelected = localDates.isSelected
+                                        )
+                                    },
+                                    dayContent = { day ->
+                                        DayContent(
+                                            day = day,
+                                            recommendation = localDates,
+                                            publicHolidays = publicHolidays
+                                        )
+                                    },
+                                    modifier = Modifier
+                                        .padding(horizontal = 16.dp)
+                                )
+                                Spacer(modifier = Modifier.height(16.dp))
+                            }
                         }
                     }
-
+                } else {
                     itemsIndexed(
-                        items = publicHoliday.recommendedDays
-                    ) { calendarIndex, localDates ->
-                        if (publicHoliday.isVisible && localDates.isVisible) {
-                            StaticCalendar(
-                                calendarState = rememberCalendarState(
-                                    initialMonth = publicHoliday.date?.toYearMonth()
-                                        ?: YearMonth.now()
-                                ),
-                                monthHeader = { month ->
-                                    MonthHeader(
-                                        month = month,
-                                        toggleCalendarSelection = toggleCalendarSelection,
-                                        index = index,
-                                        calendarIndex = calendarIndex,
-                                        isSelected = localDates.isSelected
-                                    )
-                                },
-                                dayContent = { day ->
-                                    DayContent(
-                                        day = day,
-                                        recommendation = localDates,
-                                        publicHolidays = publicHolidays
-                                    )
-                                },
-                                modifier = Modifier
-                                    .padding(horizontal = 16.dp)
-                            )
-                            Spacer(modifier = Modifier.height(16.dp))
-                        }
+                        items = topTenPublicHolidays
+                    ) { index, recommendation ->
+                        StaticCalendar(
+                            calendarState = rememberCalendarState(
+                                initialMonth = recommendation.days.firstOrNull()?.toYearMonth()
+                                    ?: YearMonth.now()
+                            ),
+                            monthHeader = { month ->
+                                MonthHeader(
+                                    month = month,
+                                    toggleCalendarSelection = toggleCalendarSelection,
+                                    index = index,
+                                    calendarIndex = 0,
+                                    isSelected = recommendation.isSelected,
+                                    fromTop = true,
+                                    toggleTopRecommendation = toggleTopRecommendation,
+                                    recommendation = recommendation
+                                )
+                            },
+                            dayContent = { day ->
+                                DayContent(
+                                    day = day,
+                                    recommendation = recommendation,
+                                    publicHolidays = publicHolidays
+                                )
+                            },
+                            modifier = Modifier
+                                .padding(horizontal = 16.dp)
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
                     }
                 }
             }
@@ -241,9 +298,12 @@ private fun HolidayRow(
 private fun MonthHeader(
     month: MonthState,
     toggleCalendarSelection: (Int, Int, Boolean) -> Unit = { _, _, _ -> },
+    toggleTopRecommendation: (Recommendation) -> Unit = {},
     index: Int,
     calendarIndex: Int,
-    isSelected: Boolean
+    isSelected: Boolean,
+    fromTop: Boolean = false,
+    recommendation: Recommendation? = null
 ) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
@@ -259,21 +319,31 @@ private fun MonthHeader(
         Spacer(modifier = Modifier.weight(1f))
         if (isSelected) {
             ButtonCriticalSubtle(onClick = {
-                toggleCalendarSelection(
-                    index,
-                    calendarIndex,
-                    false
-                )
+                if (fromTop) {
+                    if (recommendation != null)
+                        toggleTopRecommendation(recommendation)
+                } else {
+                    toggleCalendarSelection(
+                        index,
+                        calendarIndex,
+                        false,
+                    )
+                }
             }) {
                 Text(text = "Odebrat z kalendáře")
             }
         } else {
             ButtonPrimarySubtle(onClick = {
-                toggleCalendarSelection(
-                    index,
-                    calendarIndex,
-                    true
-                )
+                if (fromTop) {
+                    if (recommendation != null)
+                        toggleTopRecommendation(recommendation)
+                } else {
+                    toggleCalendarSelection(
+                        index,
+                        calendarIndex,
+                        true,
+                    )
+                }
             }) {
                 Text(text = "Přidat do kalendáře")
             }
@@ -346,28 +416,42 @@ fun HolidayListScreenPreview() {
     HolidayListScreenImpl(
         publicHolidays = listOf(
             ExtendedPublicHoliday(
-                date = Date(),
+                date = Date(1729508178),
+                localName = "Den obnovy samostatného českého státu",
+                name = "Den obnovy samostatného českého státu",
+                recommendedDays = listOf(
+                    Recommendation(
+                        days = listOf(LocalDate.now()),
+                        isSelected = true,
+                        isVisible = true,
+                        rate = 2f
+                    )
+                ),
+                isVisible = true
+            ),
+            ExtendedPublicHoliday(
+                date = Date(1729508178),
+                localName = "Den obnovy samostatného českého státu",
+                name = "Den obnovy samostatného českého státu",
+                recommendedDays = listOf(
+                    Recommendation(
+                        days = listOf(LocalDate.now()),
+                        isSelected = false,
+                        isVisible = true,
+                        rate = 2f
+                    )
+                ),
+                isVisible = true
+            ),
+            ExtendedPublicHoliday(
+                date = Date(1729508178),
                 localName = "Den obnovy samostatného českého státu",
                 name = "Den obnovy samostatného českého státu",
                 recommendedDays = listOf(),
                 isVisible = false
             ),
             ExtendedPublicHoliday(
-                date = Date(),
-                localName = "Den obnovy samostatného českého státu",
-                name = "Den obnovy samostatného českého státu",
-                recommendedDays = listOf(),
-                isVisible = false
-            ),
-            ExtendedPublicHoliday(
-                date = Date(),
-                localName = "Den obnovy samostatného českého státu",
-                name = "Den obnovy samostatného českého státu",
-                recommendedDays = listOf(),
-                isVisible = false
-            ),
-            ExtendedPublicHoliday(
-                date = Date(),
+                date = Date(1729508178),
                 localName = "Den obnovy samostatného českého státu",
                 name = "Den obnovy samostatného českého státu",
                 recommendedDays = listOf(),

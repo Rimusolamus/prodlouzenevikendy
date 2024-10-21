@@ -34,7 +34,7 @@ class HolidayListViewModel(
             makeHolidayList()
         }
 
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             combine(
                 selectedRecommendationsRepository.getSelectedRecommendations(),
                 holidayCountRepository.holidayCount
@@ -64,7 +64,30 @@ class HolidayListViewModel(
         }
     }
 
-    fun toggleCalendarSelection(publicHolidayIndex: Int, calendarIndex: Int, isAdding: Boolean) {
+    fun toggleTopRecommendation(recommendation: Recommendation) {
+        viewModelScope.launch(Dispatchers.IO) {
+            if (recommendation.isSelected) {
+                selectedRecommendationsRepository.removeSelectedRecommendation(recommendation)
+            } else {
+                selectedRecommendationsRepository.addSelectedRecommendation(recommendation)
+            }
+        }
+        state = state.copy(
+            topTenPublicHolidays = state.topTenPublicHolidays.map {
+                if (it == recommendation) {
+                    it.copy(isSelected = !it.isSelected)
+                } else {
+                    it
+                }
+            }
+        )
+    }
+
+    fun toggleCalendarSelection(
+        publicHolidayIndex: Int,
+        calendarIndex: Int,
+        isAdding: Boolean
+    ) {
         state = state.copy(
             extendedPublicHolidays = state.extendedPublicHolidays.mapIndexed { index, extendedPublicHoliday ->
                 if (index == publicHolidayIndex) {
@@ -97,21 +120,26 @@ class HolidayListViewModel(
         )
     }
 
+    fun selectTab(selectedTabIndex: Int) {
+        state = state.copy(
+            selectedTabIndex = selectedTabIndex
+        )
+    }
+
     private suspend fun makeHolidayList() {
         val holidays = publicHolidaysRepository.getPublicHolidays()
         _publicHolidays.value = holidays
 
-        holidays.map { publicHoliday ->
-            val extendedPublicHoliday = ExtendedPublicHoliday(
+        val extHolidays = holidays.map { publicHoliday ->
+            ExtendedPublicHoliday(
                 name = publicHoliday.name,
                 localName = publicHoliday.localName,
                 date = parseDateString(publicHoliday.date),
                 recommendedDays = listOf(),
                 isVisible = false
             )
-            state =
-                state.copy(extendedPublicHolidays = state.extendedPublicHolidays + extendedPublicHoliday)
         }
+        state = state.copy(extendedPublicHolidays = extHolidays)
 
         val wholeYear = makeListOfWorkingDaysOfTheYear(_publicHolidays.value)
         var holidayNumber = -1
@@ -132,20 +160,36 @@ class HolidayListViewModel(
                         holidaysIndexes,
                         HolidayFinderDirection.LEFT
                     )
-                state =
-                    state.copy(extendedPublicHolidays = state.extendedPublicHolidays.mapIndexed { index, extendedPublicHoliday ->
-                        if (index == holidayNumber) {
-                            extendedPublicHoliday.copy(
-                                recommendedDays = (recommendToRight + recommendToLeft).sortedBy { it.size }
-                                    .toRecommendationList()
-                            )
-                        } else {
-                            extendedPublicHoliday
-                        }
-                    })
+                val leftAndRight = recommendToRight + recommendToLeft
+                val updatedExtendedPublicHolidays = state.extendedPublicHolidays.toMutableList()
+                if (holidayNumber in updatedExtendedPublicHolidays.indices) {
+                    val updatedHoliday = updatedExtendedPublicHolidays[holidayNumber].copy(
+                        recommendedDays = leftAndRight
+                            .sortedBy { it.daysDates.size }
+                            .toRecommendationList()
+                    )
+                    updatedExtendedPublicHolidays[holidayNumber] = updatedHoliday
+                }
+
+                state = state.copy(extendedPublicHolidays = updatedExtendedPublicHolidays)
             }
         }
-        state = state.copy(isLoading = false)
+        val uniqueDays = mutableSetOf<LocalDate>()
+        val filteredTopTenPublicHolidays = state.extendedPublicHolidays
+            .flatMap { it.recommendedDays }
+            .sortedByDescending { it.rate }
+            .filter { recommendation ->
+                val isUnique = recommendation.days.none { it in uniqueDays }
+                if (isUnique) {
+                    uniqueDays.addAll(recommendation.days)
+                }
+                isUnique
+            }
+            .take(10)
+        state = state.copy(
+            topTenPublicHolidays = filteredTopTenPublicHolidays,
+            isLoading = false
+        )
     }
 
     private fun calculateNumberOfUsedVocationDaysInRecommendation(
@@ -164,7 +208,7 @@ class HolidayListViewModel(
         wholeYear: List<Int>,
         holidayIndexes: List<Int>,
         direction: HolidayFinderDirection
-    ): List<List<LocalDate>> {
+    ): List<HolidayRecommendation> {
         var mutableDirection = direction
         var holidayRecommendation = HolidayRecommendation()
         val holidayRecommendationList = mutableListOf<HolidayRecommendation>()
@@ -178,7 +222,7 @@ class HolidayListViewModel(
                 index++
             } else {
                 if (index == 0) {
-                    return holidayRecommendationList.map { it.daysDates }
+                    return holidayRecommendationList
                 }
                 index--
             }
@@ -210,7 +254,7 @@ class HolidayListViewModel(
                             HolidayFinderDirection.RIGHT
                         }
                     } else {
-                        return holidayRecommendationList.map { it.daysDates }
+                        return holidayRecommendationList
                     }
                 } else {
                     if (holidayRecommendationList.isEmpty()) {
@@ -335,8 +379,15 @@ class HolidayListViewModel(
         }
     }
 
-    private fun List<List<LocalDate>>.toRecommendationList(): List<Recommendation> =
-        this.map { Recommendation(it, isSelected = false, isVisible = true) }
+    private fun List<HolidayRecommendation>.toRecommendationList(): List<Recommendation> =
+        this.map {
+            Recommendation(
+                it.daysDates,
+                isSelected = false,
+                rate = it.rate,
+                isVisible = true
+            )
+        }
 
     private enum class HolidayFinderDirection {
         LEFT, RIGHT
@@ -344,7 +395,9 @@ class HolidayListViewModel(
 
     data class State(
         val isLoading: Boolean = true,
+        val selectedTabIndex: Int = 0,
         val extendedPublicHolidays: List<ExtendedPublicHoliday> = emptyList(),
+        val topTenPublicHolidays: List<Recommendation> = emptyList(),
         val vacationDaysLeft: Int = 0
     ) : AbstractViewModel.State
 }
