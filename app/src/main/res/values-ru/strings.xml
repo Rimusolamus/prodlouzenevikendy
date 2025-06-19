@@ -1,0 +1,11 @@
+<resources>
+    <string name="app_name">Длинные выходные</string>
+    <string name="save_to_calendar">Сохранить в Google Календарь</string>
+    <string name="check_results">Посмотреть результаты</string>
+    <string name="decline">Удалить</string>
+    <string name="select">Выбрать</string>
+    <string name="selected_vacations">Выбранные отпуска:</string>
+    <string name="recommend">Рекомендуем</string>
+    <string name="all">Все</string>
+    <string name="no_results">Здесь пока ничего нет. Вернитесь назад и запланируйте отпуск.</string>
+</resources>

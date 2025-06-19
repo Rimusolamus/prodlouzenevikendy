@@ -1,0 +1,11 @@
+<resources>
+    <string name="app_name">Verlängerte Wochenenden</string>
+    <string name="save_to_calendar">In Google Kalender speichern</string>
+    <string name="check_results">Ergebnisse ansehen</string>
+    <string name="decline">Entfernen</string>
+    <string name="select">Auswählen</string>
+    <string name="selected_vacations">Ausgewählte Urlaube:</string>
+    <string name="recommend">Empfohlen</string>
+    <string name="all">Alle</string>
+    <string name="no_results">Hier ist noch nichts. Kehren Sie zurück und planen Sie Ihren Urlaub.</string>
+</resources>

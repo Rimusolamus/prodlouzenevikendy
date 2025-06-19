@@ -1,0 +1,11 @@
+<resources>
+    <string name="app_name">Fines de semana largos</string>
+    <string name="save_to_calendar">Guardar en Google Calendar</string>
+    <string name="check_results">Ver resultados</string>
+    <string name="decline">Eliminar</string>
+    <string name="select">Seleccionar</string>
+    <string name="selected_vacations">Vacaciones seleccionadas:</string>
+    <string name="recommend">Recomendado</string>
+    <string name="all">Todo</string>
+    <string name="no_results">Todavía no hay nada aquí. Vuelve atrás y planea tus vacaciones.</string>
+</resources>
