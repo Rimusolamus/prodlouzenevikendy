@@ -50,7 +50,6 @@ import java.util.Locale
 
 @Composable
 fun HolidayListScreen(
-    goBack: () -> Unit,
     openSelectedHolidays: () -> Unit
 ) {
     val viewModel = koinViewModel<HolidayListViewModel>()
@@ -58,10 +57,8 @@ fun HolidayListScreen(
     HolidayListScreenImpl(
         publicHolidays = state.value.extendedPublicHolidays,
         isLoading = state.value.isLoading,
-        vacationDaysLeft = state.value.vacationDaysLeft,
         selectedTabIndex = state.value.selectedTabIndex,
         topTenPublicHolidays = state.value.topTenPublicHolidays,
-        goBack = goBack,
         openSelectedHolidays = openSelectedHolidays,
         toggleHolidayVisibility = viewModel::toggleHolidayVisibility,
         toggleCalendarSelection = viewModel::toggleCalendarSelection,
@@ -76,29 +73,20 @@ private fun HolidayListScreenImpl(
     topTenPublicHolidays: List<Recommendation> = emptyList(),
     isLoading: Boolean = false,
     selectedTabIndex: Int = 0,
-    goBack: () -> Unit = {},
     openSelectedHolidays: () -> Unit = {},
     toggleHolidayVisibility: (Int) -> Unit = {},
     selectTab: (Int) -> Unit = {},
     toggleCalendarSelection: (Int, Int, Boolean) -> Unit = { _, _, _ -> },
     toggleTopRecommendation: (Recommendation) -> Unit = {},
-    vacationDaysLeft: Int = 0
 ) {
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(text = "Prodloužené víkendy") },
-                onNavigateUp = goBack
+                title = { Text(text = "Prodloužené víkendy") }
             )
         },
         actionLayout = {
             Row(modifier = Modifier.padding(vertical = 8.dp, horizontal = 16.dp)) {
-                Text(
-                    text = "Zbyva: $vacationDaysLeft",
-                    style = OrbitTheme.typography.title5,
-                    color = OrbitTheme.colors.primary.normal,
-                    modifier = Modifier.align(Alignment.CenterVertically)
-                )
                 Spacer(modifier = Modifier.weight(1f))
                 ButtonPrimary(onClick = { openSelectedHolidays() }, content = {
                     Text(text = "Podivat se na vysledky")
@@ -154,8 +142,8 @@ private fun HolidayListScreenImpl(
 
                         itemsIndexed(
                             items = publicHoliday.recommendedDays
-                        ) { calendarIndex, localDates ->
-                            if (publicHoliday.isVisible && localDates.isVisible) {
+                        ) { calendarIndex, recommendation ->
+                            if (publicHoliday.isVisible && recommendation.isVisible) {
                                 StaticCalendar(
                                     calendarState = rememberCalendarState(
                                         initialMonth = publicHoliday.date?.toYearMonth()
@@ -167,13 +155,13 @@ private fun HolidayListScreenImpl(
                                             toggleCalendarSelection = toggleCalendarSelection,
                                             index = index,
                                             calendarIndex = calendarIndex,
-                                            isSelected = localDates.isSelected
+                                            isSelected = recommendation.isSelected
                                         )
                                     },
                                     dayContent = { day ->
                                         DayContent(
                                             day = day,
-                                            recommendation = localDates,
+                                            recommendation = recommendation,
                                             publicHolidays = publicHolidays
                                         )
                                     },
@@ -459,7 +447,6 @@ fun HolidayListScreenPreview() {
             )
         ),
         isLoading = false,
-        goBack = {}
     )
 }
 

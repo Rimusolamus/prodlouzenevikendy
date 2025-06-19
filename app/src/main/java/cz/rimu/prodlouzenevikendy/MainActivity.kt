@@ -12,7 +12,6 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import cz.rimu.prodlouzenevikendy.screens.HolidayCountScreen
 import cz.rimu.prodlouzenevikendy.screens.HolidayListScreen
 import cz.rimu.prodlouzenevikendy.screens.SelectedHolidaysScreen
 import kiwi.orbit.compose.ui.OrbitTheme
@@ -33,17 +32,10 @@ class MainActivity : ComponentActivity() {
                     val navController = rememberNavController()
                     NavHost(
                         navController = navController,
-                        startDestination = NavRoute.HolidayCount.path
+                        startDestination = NavRoute.HolidayList.path
                     ) {
-                        composable(NavRoute.HolidayCount.path) {
-                            HolidayCountScreen(goToHolidayList = {
-                                navController.navigate(NavRoute.HolidayList.path)
-                            })
-                        }
                         composable(NavRoute.HolidayList.path) {
-                            HolidayListScreen(goBack = {
-                                navController.popBackStack()
-                            }, openSelectedHolidays = {
+                            HolidayListScreen(openSelectedHolidays = {
                                 navController.navigate(NavRoute.SelectedHolidays.path)
                             })
                         }
