@@ -1,5 +1,7 @@
 package cz.rimu.prodlouzenevikendy.presentation
 
+import android.content.Context
+import android.telephony.TelephonyManager
 import android.util.Log
 import androidx.lifecycle.viewModelScope
 import cz.rimu.prodlouzenevikendy.domain.LocalSelectedRecommendationsRepository
@@ -20,13 +22,14 @@ import java.util.*
 class HolidayListViewModel(
     private val publicHolidaysRepository: RemotePublicHolidaysRepository,
     private val selectedRecommendationsRepository: LocalSelectedRecommendationsRepository,
+    context: Context
 ) : AbstractViewModel<HolidayListViewModel.State>(State()) {
 
     private val _publicHolidays = MutableStateFlow<List<PublicHoliday>>(emptyList())
 
     init {
         viewModelScope.launch(Dispatchers.IO) {
-            makeHolidayList()
+            makeHolidayList(context)
         }
     }
 
@@ -147,8 +150,19 @@ class HolidayListViewModel(
         )
     }
 
-    private suspend fun makeHolidayList() {
-        val holidays = publicHolidaysRepository.getPublicHolidays()
+    private fun getCountryCodeFromTelephony(context: Context): String? {
+        val telephonyManager =
+            context.getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager
+        return telephonyManager.networkCountryIso?.uppercase()
+    }
+
+    private suspend fun makeHolidayList(context: Context) {
+        getCountryCodeFromTelephony(context)
+
+        val holidays = publicHolidaysRepository.getPublicHolidays(
+            getCountryCodeFromTelephony(context) ?: "CZ"
+        )
+            .sortedBy { parseDateString(it.date) ?: Date() }
         _publicHolidays.value = holidays
 
         val extHolidays = holidays.map { publicHoliday ->

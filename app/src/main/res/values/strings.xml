@@ -1,3 +1,11 @@
 <resources>
-    <string name="app_name">Prodloužené víkendy</string>
+    <string name="app_name">Extended weekends</string>
+    <string name="save_to_calendar">Save to Google Calendar</string>
+    <string name="check_results">Check the results</string>
+    <string name="decline">Deselect</string>
+    <string name="select">Select</string>
+    <string name="selected_vacations">Selected vacations:</string>
+    <string name="recommend">Recommended</string>
+    <string name="all">All</string>
+    <string name="no_results">It\'s empty here. Go back and pick a holiday.</string>
 </resources>

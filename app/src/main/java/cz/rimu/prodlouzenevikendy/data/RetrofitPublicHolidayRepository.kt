@@ -8,7 +8,7 @@ import java.time.LocalDate
 class RetrofitPublicHolidayRepository(
     private val api: Api
 ): RemotePublicHolidaysRepository {
-    override suspend fun getPublicHolidays(): List<PublicHoliday> {
-        return api.getPublicHolidays(LocalDate.now().year.toString())
+    override suspend fun getPublicHolidays(country: String): List<PublicHoliday> {
+        return api.getPublicHolidays(LocalDate.now().year.toString(), country)
     }
 }

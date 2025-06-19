@@ -1,0 +1,11 @@
+<resources>
+    <string name="app_name">Prodloužené víkendy</string>
+    <string name="save_to_calendar">Uložit do Google Kalendáře</string>
+    <string name="check_results">Podívat se na výsledky</string>
+    <string name="decline">Odebrat</string>
+    <string name="select">Zvolit si</string>
+    <string name="selected_vacations">Vybrané dovolené:</string>
+    <string name="recommend">Doporučujeme</string>
+    <string name="all">Vše</string>
+    <string name="no_results">Zatím tady nic není. Vraťte se zpět a naplánujte si dovolenou.</string>
+</resources>

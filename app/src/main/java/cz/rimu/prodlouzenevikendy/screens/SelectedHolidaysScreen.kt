@@ -17,6 +17,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import cz.rimu.prodlouzenevikendy.model.Recommendation
 import cz.rimu.prodlouzenevikendy.presentation.SelectedHolidaysViewModel
@@ -55,7 +56,7 @@ fun SelectedHolidaysScreenImpl(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(text = "Prodloužené víkendy") },
+                title = { Text(text = stringResource(id = cz.rimu.prodlouzenevikendy.R.string.app_name)) },
                 onNavigateUp = onBack
             )
         },
@@ -64,7 +65,7 @@ fun SelectedHolidaysScreenImpl(
                 item {
                     Spacer(modifier = Modifier.height(16.dp))
                     Text(
-                        text = if (state.selectedHolidays?.isEmpty() == true) "Zatím tady nic není. Vraťte se zpátky a naplánujte si dovolenou." else "Vybrané dovolené:",
+                        text = if (state.selectedHolidays?.isEmpty() == true) stringResource(cz.rimu.prodlouzenevikendy.R.string.no_results) else stringResource(cz.rimu.prodlouzenevikendy.R.string.selected_vacations),
                         style = OrbitTheme.typography.title4,
                         modifier = Modifier
                             .fillMaxWidth()
@@ -106,7 +107,7 @@ fun SelectedHolidaysScreenImpl(
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.spacedBy(4.dp)
                             ) {
-                                Text(text = "Ulozit do Google calendaru")
+                                Text(text = stringResource(cz.rimu.prodlouzenevikendy.R.string.save_to_calendar))
                             }
                         }
                         Spacer(modifier = Modifier.height(16.dp))

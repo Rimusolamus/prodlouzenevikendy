@@ -14,6 +14,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.fastFirstOrNull
@@ -82,14 +83,14 @@ private fun HolidayListScreenImpl(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(text = "Prodloužené víkendy") }
+                title = { Text(text = stringResource(id = cz.rimu.prodlouzenevikendy.R.string.app_name)) }
             )
         },
         actionLayout = {
             Row(modifier = Modifier.padding(vertical = 8.dp, horizontal = 16.dp)) {
                 Spacer(modifier = Modifier.weight(1f))
                 ButtonPrimary(onClick = { openSelectedHolidays() }, content = {
-                    Text(text = "Podivat se na vysledky")
+                    Text(text = stringResource(id = cz.rimu.prodlouzenevikendy.R.string.check_results))
                 })
             }
         }
@@ -116,10 +117,10 @@ private fun HolidayListScreenImpl(
                     ) {
                         Tab(
                             selected = selectedTabIndex == 0,
-                            onClick = { selectTab(0) }) { Text("Doporučujeme") }
+                            onClick = { selectTab(0) }) { Text(text = stringResource(cz.rimu.prodlouzenevikendy.R.string.recommend)) }
                         Tab(
                             selected = selectedTabIndex == 0,
-                            onClick = { selectTab(1) }) { Text("Vše") }
+                            onClick = { selectTab(1) }) { Text(text = stringResource(cz.rimu.prodlouzenevikendy.R.string.all)) }
                     }
                 }
                 item { Spacer(modifier = Modifier.height(8.dp)) }
@@ -318,7 +319,7 @@ private fun MonthHeader(
                     )
                 }
             }) {
-                Text(text = "Odebrat z kalendáře")
+                Text(text = stringResource(cz.rimu.prodlouzenevikendy.R.string.decline))
             }
         } else {
             ButtonPrimarySubtle(onClick = {
@@ -333,7 +334,7 @@ private fun MonthHeader(
                     )
                 }
             }) {
-                Text(text = "Přidat do kalendáře")
+                Text(text = stringResource(cz.rimu.prodlouzenevikendy.R.string.select))
             }
         }
     }
