@@ -9,9 +9,9 @@ import cz.rimu.prodlouzenevikendy.domain.RemotePublicHolidaysRepository
 import cz.rimu.prodlouzenevikendy.model.Api
 import cz.rimu.prodlouzenevikendy.presentation.HolidayListViewModel
 import cz.rimu.prodlouzenevikendy.presentation.SelectedHolidaysViewModel
-import org.koin.androidx.viewmodel.dsl.viewModelOf
 import org.koin.core.module.dsl.factoryOf
 import org.koin.core.module.dsl.singleOf
+import org.koin.core.module.dsl.viewModelOf
 import org.koin.dsl.bind
 import org.koin.dsl.module
 import retrofit2.Retrofit

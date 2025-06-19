@@ -1,7 +1,9 @@
 package cz.rimu.prodlouzenevikendy.model
 
+import androidx.annotation.Keep
 import com.squareup.moshi.Json
 
+@Keep
 data class PublicHoliday(
     @field:Json(name = "data") val date: String,
     @field:Json(name = "localName") val localName: String,

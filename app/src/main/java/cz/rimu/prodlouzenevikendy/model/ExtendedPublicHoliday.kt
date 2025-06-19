@@ -1,11 +1,13 @@
 package cz.rimu.prodlouzenevikendy.model
 
+import androidx.annotation.Keep
 import androidx.compose.runtime.Immutable
 import java.time.LocalDate
 import java.time.YearMonth
 import java.util.Calendar
 import java.util.Date
 
+@Keep
 @Immutable
 data class ExtendedPublicHoliday(
     val localName: String,
@@ -15,6 +17,7 @@ data class ExtendedPublicHoliday(
     val isVisible: Boolean,
 )
 
+@Keep
 @Immutable
 data class Recommendation(
     val days: List<LocalDate>,

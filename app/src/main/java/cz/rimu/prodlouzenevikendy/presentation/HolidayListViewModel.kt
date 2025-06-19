@@ -125,6 +125,17 @@ class HolidayListViewModel(
                     } else {
                         it
                     }
+                },
+                extendedPublicHolidays = state.extendedPublicHolidays.map {
+                    it.copy(
+                        recommendedDays = it.recommendedDays.map { recommendation ->
+                            if (recommendation == rec) {
+                                recommendation.copy(isSelected = isAdding)
+                            } else {
+                                recommendation
+                            }
+                        }
+                    )
                 }
             )
         }

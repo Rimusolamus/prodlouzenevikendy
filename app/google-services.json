@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "590195715999",
+    "project_id": "prodlozene-vikendy",
+    "storage_bucket": "prodlozene-vikendy.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:590195715999:android:4fb5b03787074dd60e57aa",
+        "android_client_info": {
+          "package_name": "cz.rimu.prodlouzenevikendy"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB0DrE_sV8nh5lZsbCYl__KiQljBKLm8Kk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
